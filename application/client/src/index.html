@@ -8,6 +8,11 @@
     <link rel="preload" href="/fonts/ReiNoAreMincho-Regular.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body class="bg-cax-canvas text-cax-text">
+    <script>
+      window.__PREFETCH__ = {};
+      window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = fetch('/api/v1/posts?limit=30&offset=0').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      window.__PREFETCH__['/api/v1/me'] = fetch('/api/v1/me').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+    </script>
     <div id="app">
       <div style="display:flex;justify-content:center;font-family:sans-serif">
         <div style="display:flex;min-height:100vh;max-width:100%">

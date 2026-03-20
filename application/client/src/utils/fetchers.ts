@@ -7,6 +7,11 @@ export async function fetchBinary(url: string): Promise<ArrayBuffer> {
 }
 
 export async function fetchJSON<T>(url: string): Promise<T> {
+  const prefetched = (window as any).__PREFETCH__?.[url];
+  if (prefetched) {
+    delete (window as any).__PREFETCH__[url];
+    return prefetched as Promise<T>;
+  }
   const response = await fetch(url, { method: "GET" });
   if (!response.ok) throw response;
   return response.json() as Promise<T>;
