@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useId, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
@@ -36,6 +36,8 @@ export const AppContainer = () => {
   );
   const [authReady, setAuthReady] = useState(() => initialAuthFromBootstrap().authReady);
 
+  const bootstrapMeGenerationRef = useRef(0);
+
   useEffect(() => {
     const applyBootstrap = () => {
       const raw = (window as unknown as { __BOOTSTRAP_ME__?: { status: string; user?: Models.User } })
@@ -55,13 +57,20 @@ export const AppContainer = () => {
   }, []);
 
   useEffect(() => {
+    const snapshot = bootstrapMeGenerationRef.current;
     void fetchJSON<Models.User>("/api/v1/me")
       .then((user) => {
+        if (snapshot !== bootstrapMeGenerationRef.current) {
+          return;
+        }
         setCachedUser(user);
         setActiveUser(user);
         setAuthReady(true);
       })
       .catch((err) => {
+        if (snapshot !== bootstrapMeGenerationRef.current) {
+          return;
+        }
         if (err instanceof Response && err.status === 401) {
           setActiveUser(null);
           clearCachedUser();
@@ -71,12 +80,14 @@ export const AppContainer = () => {
       });
   }, []);
   const handleAuthSuccessUser = useCallback((user: Models.User) => {
+    bootstrapMeGenerationRef.current += 1;
     setCachedUser(user);
     setActiveUser(user);
     setAuthReady(true);
   }, []);
 
   const handleLogout = useCallback(async () => {
+    bootstrapMeGenerationRef.current += 1;
     await sendJSON("/api/v1/signout", {});
     clearCachedUser();
     clearAuthHintOnClient();

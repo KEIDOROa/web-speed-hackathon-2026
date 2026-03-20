@@ -13,6 +13,7 @@ import {
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import {
   extractTokens,
+  fallbackSubstringSuggestions,
   filterSuggestionsBM25,
 } from "@web-speed-hackathon-2026/client/src/utils/bm25_search";
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
@@ -114,7 +115,7 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
     let cancelled = false;
 
     const updateSuggestions = async () => {
-      if (!tokenizer || !inputValue.trim()) {
+      if (!inputValue.trim()) {
         setSuggestions([]);
         setQueryTokens([]);
         setShowSuggestions(false);
@@ -128,8 +129,15 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
         return;
       }
 
-      const tokens = extractTokens(tokenizer.tokenize(inputValue));
-      const results = filterSuggestionsBM25(tokenizer, candidates, tokens);
+      const tokens =
+        tokenizer !== null ? extractTokens(tokenizer.tokenize(inputValue)) : ([] as string[]);
+      let results =
+        tokenizer !== null && tokens.length > 0
+          ? filterSuggestionsBM25(tokenizer, candidates, tokens)
+          : [];
+      if (results.length === 0) {
+        results = fallbackSubstringSuggestions(candidates, inputValue);
+      }
 
       if (cancelled) {
         return;

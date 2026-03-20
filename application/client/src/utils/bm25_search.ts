@@ -37,3 +37,29 @@ export function filterSuggestionsBM25(
     .slice(-10)
     .map((s) => s.text);
 }
+
+/** kuromoji 辞書未配信時など BM25 が使えない場合の、部分一致ベースのフォールバック */
+export function fallbackSubstringSuggestions(candidates: string[], input: string): string[] {
+  const q = input.trim();
+  if (!q) return [];
+  const ql = q.toLowerCase();
+  const scored = candidates.map((text) => {
+    const tl = text.toLowerCase();
+    let score = 0;
+    if (ql.length >= 2 && tl.includes(ql)) {
+      score += 100;
+    }
+    const latins = q.match(/[A-Za-z][A-Za-z0-9]*/g) ?? [];
+    for (const w of latins) {
+      if (w.length >= 2 && tl.includes(w.toLowerCase())) {
+        score += 50;
+      }
+    }
+    return { text, score };
+  });
+  return scored
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((x) => x.text);
+}

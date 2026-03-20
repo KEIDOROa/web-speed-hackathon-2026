@@ -41,26 +41,31 @@ export function useSSE<T>(options: SSEOptions<T>): ReturnValues {
       setContent("");
       setIsStreaming(true);
 
-      const eventSource = new EventSource(url);
+      const eventSource = new EventSource(url, { withCredentials: true });
       eventSourceRef.current = eventSource;
 
-      eventSource.onmessage = (event) => {
-        const data = JSON.parse(event.data) as T;
+      const handleMessage = (event: MessageEvent) => {
+        try {
+          const data = JSON.parse(event.data) as T;
 
-        const isDone = options.onDone?.(data) ?? false;
-        if (isDone) {
-          options.onComplete?.(contentRef.current);
+          const isDone = options.onDone?.(data) ?? false;
+          if (isDone) {
+            options.onComplete?.(contentRef.current);
+            stop();
+            return;
+          }
+
+          const newContent = options.onMessage(data, contentRef.current);
+          contentRef.current = newContent;
+          setContent(newContent);
+        } catch {
           stop();
-          return;
         }
-
-        const newContent = options.onMessage(data, contentRef.current);
-        contentRef.current = newContent;
-        setContent(newContent);
       };
 
-      eventSource.onerror = (error) => {
-        console.error("SSE Error:", error);
+      eventSource.addEventListener("message", handleMessage);
+
+      eventSource.onerror = () => {
         stop();
       };
     },
