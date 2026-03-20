@@ -103,6 +103,7 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
                 <Link
                   aria-label={`@${peer.username}`}
                   className="hover:bg-cax-surface-subtle px-4"
+                  reloadDocument
                   to={`/dm/${conversation.id}`}
                 >
                   <div className="border-cax-border flex gap-4 border-b px-4 pt-2 pb-4">

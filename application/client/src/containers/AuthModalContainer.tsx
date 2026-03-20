@@ -53,7 +53,7 @@ async function getAuthErrorMessage(err: unknown, type: "signin" | "signup"): Pro
   return type === "signup" ? "登録に失敗しました" : "パスワードが異なります";
 }
 
-export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
+export const AuthModalContainer = ({ id, onUpdateActiveUser: _onUpdateActiveUser }: Props) => {
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
@@ -77,14 +77,11 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
   const handleSubmit = useCallback(
     async (values: AuthFormData) => {
       try {
-        if (values.type === "signup") {
-          const user = await sendJSON<Models.User>("/api/v1/signup", values);
-          onUpdateActiveUser(user);
-        } else {
-          const user = await sendJSON<Models.User>("/api/v1/signin", values);
-          onUpdateActiveUser(user);
-        }
-        handleRequestCloseModal();
+        await sendJSON<Models.User>(
+          values.type === "signup" ? "/api/v1/signup" : "/api/v1/signin",
+          values,
+        );
+        window.location.reload();
       } catch (err: unknown) {
         const error = await getAuthErrorMessage(err, values.type);
         throw new SubmissionError({
@@ -92,7 +89,7 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
         });
       }
     },
-    [handleRequestCloseModal, onUpdateActiveUser],
+    [],
   );
 
   return (
