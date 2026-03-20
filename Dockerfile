@@ -26,6 +26,7 @@ COPY ./application .
 RUN NODE_OPTIONS="--max-old-space-size=6144" pnpm build
 
 RUN --mount=type=cache,target=/pnpm/store CI=true pnpm install --frozen-lockfile --prod --filter @web-speed-hackathon-2026/server
+RUN cd server && pnpm rebuild sqlite3
 
 FROM base
 
