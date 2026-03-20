@@ -1,8 +1,8 @@
 export const POST_IMAGE_SRCSET_WIDTHS = [280, 360, 480, 640, 800] as const;
 
-export const MOVIE_SRCSET_WIDTHS = [280, 360, 480, 640] as const;
+export const MOVIE_SRCSET_WIDTHS = [280, 360, 480] as const;
 
-export const MOVIE_IMAGE_SIZES = "(max-width: 640px) min(100vw - 5rem, 560px), 560px";
+export const MOVIE_IMAGE_SIZES = "(max-width: 640px) min(100vw - 5rem, 480px), 480px";
 
 export function getImagePath(imageId: string): string {
   return `/images/${imageId}.jpg`;

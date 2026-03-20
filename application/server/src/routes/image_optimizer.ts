@@ -13,7 +13,7 @@ const PROFILE_IMAGE_MAX_WIDTH = 128;
 
 const POST_WIDTH_WHITELIST = new Set([280, 360, 480, 640, 800]);
 const PROFILE_WIDTH_WHITELIST = new Set([64, 96, 128]);
-const MOVIE_WIDTH_WHITELIST = new Set([280, 360, 480, 640]);
+const MOVIE_WIDTH_WHITELIST = new Set([280, 360, 480]);
 
 function findMediaFile(reqPath: string): string | null {
   const uploadFile = path.join(UPLOAD_PATH, reqPath);
@@ -108,14 +108,14 @@ async function transcodeMovie(
 
   if (preferWebp) {
     try {
-      const buffer = await pipeline().webp({ quality: 78, effort: 5 }).toBuffer();
+      const buffer = await pipeline().webp({ quality: 50, effort: 4 }).toBuffer();
       return { buffer, contentType: "image/webp", cacheVariant: "webp" };
     } catch {
       // アニメ WebP 化に失敗した場合は GIF にフォールバック
     }
   }
 
-  const buffer = await pipeline().gif({ effort: 8 }).toBuffer();
+  const buffer = await pipeline().gif({ effort: 4, colours: 128 }).toBuffer();
   return { buffer, contentType: "image/gif", cacheVariant: "gif" };
 }
 
