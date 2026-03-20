@@ -1,5 +1,5 @@
 import { MouseEventHandler, useCallback } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 
 import { formatLongDate, toISOString } from "@web-speed-hackathon-2026/client/src/utils/date";
 
@@ -33,8 +33,6 @@ interface Props {
 }
 
 export const TimelineItem = ({ post, priority = false }: Props) => {
-  const navigate = useNavigate();
-
   /**
    * ボタンやリンク以外の箇所をクリックしたとき かつ 文字が選択されてないとき、投稿詳細ページに遷移する
    */
@@ -42,10 +40,10 @@ export const TimelineItem = ({ post, priority = false }: Props) => {
     (ev) => {
       const isSelectedText = document.getSelection()?.isCollapsed === false;
       if (!isClickedAnchorOrButton(ev.target, ev.currentTarget) && !isSelectedText) {
-        navigate(`/posts/${post.id}`);
+        window.location.assign(`/posts/${post.id}`);
       }
     },
-    [post, navigate],
+    [post],
   );
 
   return (

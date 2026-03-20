@@ -22,28 +22,9 @@ async function fetchSoundBinary(url: string): Promise<ArrayBuffer> {
 
 export const SoundPlayer = ({ sound }: Props) => {
   const soundUrl = getSoundPath(sound.id);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const [isVisible, setIsVisible] = useState(false);
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   const [soundData, setSoundData] = useState<ArrayBuffer | null>(null);
   useEffect(() => {
-    if (!isVisible) return;
     let cancelled = false;
     setSoundData(null);
     void fetchSoundBinary(soundUrl)
@@ -56,7 +37,7 @@ export const SoundPlayer = ({ sound }: Props) => {
     return () => {
       cancelled = true;
     };
-  }, [soundUrl, isVisible]);
+  }, [soundUrl]);
 
   const [currentTimeRatio, setCurrentTimeRatio] = useState(0);
   const handleTimeUpdate = useCallback<ReactEventHandler<HTMLAudioElement>>((ev) => {
@@ -79,15 +60,12 @@ export const SoundPlayer = ({ sound }: Props) => {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="bg-cax-surface-subtle flex min-h-[4.5rem] w-full items-center justify-center gap-1 sm:min-h-0 sm:h-full"
-    >
+    <div className="bg-cax-surface-subtle flex min-h-[4.5rem] w-full items-center justify-center gap-1 sm:min-h-0 sm:h-full">
       <audio ref={audioRef} loop={true} onTimeUpdate={handleTimeUpdate} src={soundUrl} preload="none" />
       <div className="p-2">
         <button
           aria-label={isPlaying ? "音声を一時停止" : "音声を再生"}
-          className="bg-cax-brand text-cax-surface-raised flex h-8 w-8 items-center justify-center rounded-full text-sm hover:opacity-75"
+          className="bg-cax-accent text-cax-surface-raised flex h-8 w-8 items-center justify-center rounded-full text-sm hover:opacity-75"
           onClick={handleTogglePlaying}
           type="button"
         >

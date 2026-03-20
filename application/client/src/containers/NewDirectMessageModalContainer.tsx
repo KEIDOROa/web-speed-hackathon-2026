@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router";
 import { SubmissionError } from "redux-form";
 
 import { NewDirectMessageModalPage } from "@web-speed-hackathon-2026/client/src/components/direct_message/NewDirectMessageModalPage";
@@ -28,27 +27,22 @@ export const NewDirectMessageModalContainer = ({ id }: Props) => {
     };
   }, [ref]);
 
-  const navigate = useNavigate();
-
-  const handleSubmit = useCallback(
-    async (values: NewDirectMessageFormData) => {
-      try {
-        const username = normalizeUsernameForLookup(values.username);
-        const user = await fetchJSON<Models.User>(
-          `/api/v1/users/${encodeURIComponent(username)}`,
-        );
-        const conversation = await sendJSON<Models.DirectMessageConversation>(`/api/v1/dm`, {
-          peerId: user.id,
-        });
-        navigate(`/dm/${conversation.id}`);
-      } catch {
-        throw new SubmissionError({
-          _error: "ユーザーが見つかりませんでした",
-        });
-      }
-    },
-    [navigate],
-  );
+  const handleSubmit = useCallback(async (values: NewDirectMessageFormData) => {
+    try {
+      const username = normalizeUsernameForLookup(values.username);
+      const user = await fetchJSON<Models.User>(
+        `/api/v1/users/${encodeURIComponent(username)}`,
+      );
+      const conversation = await sendJSON<Models.DirectMessageConversation>(`/api/v1/dm`, {
+        peerId: user.id,
+      });
+      window.location.assign(`/dm/${conversation.id}`);
+    } catch {
+      throw new SubmissionError({
+        _error: "ユーザーが見つかりませんでした",
+      });
+    }
+  }, []);
 
   return (
     <Modal id={id} ref={ref} closedby="any">
