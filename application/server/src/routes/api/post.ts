@@ -23,7 +23,29 @@ postRouter.get("/posts", async (req, res) => {
     return res.status(200).type("application/json").send(cached.data);
   }
 
-  const posts = await Post.findAll({ limit, offset });
+  const posts = await Post.unscoped().findAll({
+    limit,
+    offset,
+    attributes: {
+      exclude: ["userId", "movieId", "soundId"],
+    },
+    include: [
+      {
+        association: "user",
+        attributes: { exclude: ["profileImageId"] },
+        include: [{ association: "profileImage" }],
+      },
+      {
+        association: "images",
+        order: [["createdAt", "ASC"]],
+        separate: true,
+        through: { attributes: [] },
+      },
+      { association: "movie" },
+      { association: "sound" },
+    ],
+    order: [["id", "DESC"]],
+  });
   const json = JSON.stringify(posts);
 
   postsCache.set(cacheKey, { data: json, timestamp: Date.now() });

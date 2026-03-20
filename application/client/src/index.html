@@ -15,7 +15,7 @@
       function fetchWithTimeout(url, ms) {
         var ctrl = new AbortController();
         var tid = setTimeout(function() { ctrl.abort(); }, ms);
-        return fetch(url, { signal: ctrl.signal }).then(function(r) {
+        return fetch(url, { signal: ctrl.signal, credentials: "same-origin" }).then(function(r) {
           clearTimeout(tid);
           return r.ok ? r.json() : Promise.reject(r);
         }).catch(function(e) { clearTimeout(tid); return Promise.reject(e); });

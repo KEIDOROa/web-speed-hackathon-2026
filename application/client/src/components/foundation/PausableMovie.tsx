@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import gifler from "gifler";
 
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
+import { useInViewOnce } from "@web-speed-hackathon-2026/client/src/hooks/use_in_view_once";
 
 type GifAnimator = Awaited<ReturnType<ReturnType<typeof gifler>["animate"]>>;
 
@@ -16,11 +17,15 @@ interface Props {
  * アニメ GIF を canvas に描画し、クリックで一時停止・再生を切り替えます。
  * サーバーが Accept: image/webp で WebP を返すため、gif デコード用に Accept: image/gif で取得します。
  */
-export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _priority }: Props) => {
+export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority = false }: Props) => {
+  const { ref: rootRef, visible: shouldLoadMedia } = useInViewOnce<HTMLDivElement>({ immediate: priority });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animatorRef = useRef<GifAnimator | null>(null);
 
   useEffect(() => {
+    if (!shouldLoadMedia) {
+      return;
+    }
     let cancelled = false;
     let objectUrl: string | null = null;
     const canvas = canvasRef.current;
@@ -55,7 +60,7 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [src]);
+  }, [src, shouldLoadMedia]);
 
   const handleToggle = useCallback(() => {
     const animator = animatorRef.current;
@@ -71,7 +76,7 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
 
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
-      <div className="relative block h-full w-full">
+      <div ref={rootRef} className="relative block h-full w-full">
         <button
           aria-label="動画の再生・一時停止"
           className="absolute inset-0 z-10 block h-full w-full cursor-pointer border-0 bg-transparent p-0"
