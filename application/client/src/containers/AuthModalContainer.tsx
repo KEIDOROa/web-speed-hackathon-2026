@@ -16,23 +16,41 @@ const ERROR_MESSAGES: Record<string, string> = {
   USERNAME_TAKEN: "ユーザー名が使われています",
 };
 
-function getErrorCode(err: JQuery.jqXHR<unknown>, type: "signin" | "signup"): string {
-  const responseJSON = err.responseJSON;
+async function getAuthErrorMessage(err: unknown, type: "signin" | "signup"): Promise<string> {
+  const legacy = err as { responseJSON?: unknown };
   if (
-    typeof responseJSON !== "object" ||
-    responseJSON === null ||
-    !("code" in responseJSON) ||
-    typeof responseJSON.code !== "string" ||
-    !Object.keys(ERROR_MESSAGES).includes(responseJSON.code)
+    typeof legacy.responseJSON === "object" &&
+    legacy.responseJSON !== null &&
+    "code" in legacy.responseJSON &&
+    typeof (legacy.responseJSON as { code: unknown }).code === "string"
   ) {
-    if (type === "signup") {
-      return "登録に失敗しました";
-    } else {
-      return "パスワードが異なります";
+    const code = (legacy.responseJSON as { code: string }).code;
+    if (code in ERROR_MESSAGES) {
+      return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES];
     }
   }
 
-  return ERROR_MESSAGES[responseJSON.code]!;
+  if (err instanceof Response) {
+    try {
+      const data: unknown = await err.json();
+      if (
+        typeof data === "object" &&
+        data !== null &&
+        "code" in data &&
+        typeof (data as { code: unknown }).code === "string"
+      ) {
+        const code = (data as { code: string }).code;
+        if (code in ERROR_MESSAGES) {
+          return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES];
+        }
+      }
+    } catch {
+      // JSON でない本文
+    }
+    return type === "signup" ? "登録に失敗しました" : "パスワードが異なります";
+  }
+
+  return type === "signup" ? "登録に失敗しました" : "パスワードが異なります";
 }
 
 export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
@@ -68,7 +86,7 @@ export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
         }
         handleRequestCloseModal();
       } catch (err: unknown) {
-        const error = getErrorCode(err as JQuery.jqXHR<unknown>, values.type);
+        const error = await getAuthErrorMessage(err, values.type);
         throw new SubmissionError({
           _error: error,
         });

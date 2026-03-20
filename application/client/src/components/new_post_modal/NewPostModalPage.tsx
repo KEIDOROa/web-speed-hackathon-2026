@@ -11,6 +11,8 @@ import { convertSound } from "@web-speed-hackathon-2026/client/src/utils/convert
 
 const MAX_UPLOAD_BYTES_LIMIT = 10 * 1024 * 1024;
 
+const POST_BODY_FIELD_LABEL = "いまなにしてる？";
+
 interface SubmitParams {
   images: File[];
   movie: File | undefined;
@@ -136,10 +138,11 @@ export const NewPostModalPage = ({ id, hasError, isLoading, onResetError, onSubm
       </h2>
 
       <textarea
+        aria-label={POST_BODY_FIELD_LABEL}
         className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2"
         rows={4}
         onChange={handleChangeText}
-        placeholder="いまなにしてる？"
+        placeholder={POST_BODY_FIELD_LABEL}
       />
 
       <div className="text-cax-text flex w-full items-center justify-evenly">
