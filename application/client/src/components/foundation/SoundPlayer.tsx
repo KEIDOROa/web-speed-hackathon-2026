@@ -2,13 +2,10 @@ import { ReactEventHandler, useCallback, useEffect, useRef, useState } from "rea
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { SoundWaveSVG } from "@web-speed-hackathon-2026/client/src/components/foundation/SoundWaveSVG";
-import { useInViewOnce } from "@web-speed-hackathon-2026/client/src/hooks/use_in_view_once";
 import { getSoundPath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
   sound: Models.Sound;
-  /** タイムラインでは遅延、投稿詳細などでは true */
-  loadWaveformImmediately?: boolean;
 }
 
 async function fetchSoundBinary(url: string): Promise<ArrayBuffer> {
@@ -23,17 +20,11 @@ async function fetchSoundBinary(url: string): Promise<ArrayBuffer> {
   }
 }
 
-export const SoundPlayer = ({ sound, loadWaveformImmediately = false }: Props) => {
-  const { ref: rootRef, visible: shouldLoadWaveform } = useInViewOnce<HTMLDivElement>({
-    immediate: loadWaveformImmediately,
-  });
+export const SoundPlayer = ({ sound }: Props) => {
   const soundUrl = getSoundPath(sound.id);
 
   const [soundData, setSoundData] = useState<ArrayBuffer | null>(null);
   useEffect(() => {
-    if (!shouldLoadWaveform) {
-      return;
-    }
     let cancelled = false;
     setSoundData(null);
     void fetchSoundBinary(soundUrl)
@@ -46,7 +37,7 @@ export const SoundPlayer = ({ sound, loadWaveformImmediately = false }: Props) =
     return () => {
       cancelled = true;
     };
-  }, [soundUrl, shouldLoadWaveform]);
+  }, [soundUrl]);
 
   const [currentTimeRatio, setCurrentTimeRatio] = useState(0);
   const handleTimeUpdate = useCallback<ReactEventHandler<HTMLAudioElement>>((ev) => {
@@ -69,10 +60,7 @@ export const SoundPlayer = ({ sound, loadWaveformImmediately = false }: Props) =
   }, []);
 
   return (
-    <div
-      ref={rootRef}
-      className="bg-cax-surface-subtle flex min-h-[4.5rem] w-full items-center justify-center gap-1 sm:min-h-0 sm:h-full"
-    >
+    <div className="bg-cax-surface-subtle flex min-h-[4.5rem] w-full items-center justify-center gap-1 sm:min-h-0 sm:h-full">
       <audio ref={audioRef} loop={true} onTimeUpdate={handleTimeUpdate} src={soundUrl} preload="none" />
       <div className="p-2">
         <button
