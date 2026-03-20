@@ -8,9 +8,10 @@ import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/
 
 interface Props {
   post: Models.Post;
+  lcpPriority?: boolean;
 }
 
-export const PostItem = ({ post }: Props) => {
+export const PostItem = ({ post, lcpPriority = false }: Props) => {
   return (
     <article className="px-1 sm:px-4">
       <div className="border-cax-border border-b px-4 pt-4 pb-4">
@@ -23,6 +24,11 @@ export const PostItem = ({ post }: Props) => {
               <img
                 alt={post.user.profileImage.alt}
                 src={getProfileImagePath(post.user.profileImage.id)}
+                decoding="async"
+                fetchPriority={lcpPriority ? "high" : "auto"}
+                height={64}
+                loading={lcpPriority ? "eager" : "lazy"}
+                width={64}
               />
             </Link>
           </div>
@@ -51,7 +57,7 @@ export const PostItem = ({ post }: Props) => {
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} />
+              <ImageArea images={post.images} priority={lcpPriority} />
             </div>
           ) : null}
           {post.movie ? (

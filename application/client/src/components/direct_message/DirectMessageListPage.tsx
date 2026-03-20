@@ -41,24 +41,42 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
     void loadConversations();
   });
 
+  const header = (
+    <header className="border-cax-border flex flex-col gap-4 border-b px-4 pt-6 pb-4">
+      <h1 className="text-2xl font-bold">ダイレクトメッセージ</h1>
+      <div className="flex flex-wrap items-center gap-4">
+        <Button
+          command="show-modal"
+          commandfor={newDmModalId}
+          leftItem={<FontAwesomeIcon iconType="paper-plane" styleType="solid" />}
+        >
+          新しくDMを始める
+        </Button>
+      </div>
+    </header>
+  );
+
+  if (conversations == null && error == null) {
+    return (
+      <section>
+        {header}
+        <p className="text-cax-text-muted px-4 py-6 text-center text-sm">読み込み中…</p>
+      </section>
+    );
+  }
+
   if (conversations == null) {
-    return null;
+    return (
+      <section>
+        {header}
+        <p className="text-cax-danger px-4 py-6 text-center text-sm">DMの取得に失敗しました</p>
+      </section>
+    );
   }
 
   return (
     <section>
-      <header className="border-cax-border flex flex-col gap-4 border-b px-4 pt-6 pb-4">
-        <h1 className="text-2xl font-bold">ダイレクトメッセージ</h1>
-        <div className="flex flex-wrap items-center gap-4">
-          <Button
-            command="show-modal"
-            commandfor={newDmModalId}
-            leftItem={<FontAwesomeIcon iconType="paper-plane" styleType="solid" />}
-          >
-            新しくDMを始める
-          </Button>
-        </div>
-      </header>
+      {header}
 
       {error != null ? (
         <p className="text-cax-danger px-4 py-6 text-center text-sm">DMの取得に失敗しました</p>
@@ -68,7 +86,7 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
         </p>
       ) : (
         <ul data-testid="dm-list">
-          {conversations.map((conversation) => {
+          {conversations.map((conversation, index) => {
             const { messages } = conversation;
             const peer =
               conversation.initiator.id !== activeUser.id
@@ -87,7 +105,12 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
                     <img
                       alt={peer.profileImage.alt}
                       className="w-12 shrink-0 self-start rounded-full"
+                      decoding="async"
+                      fetchPriority={index === 0 ? "high" : "auto"}
+                      height={48}
+                      loading={index === 0 ? "eager" : "lazy"}
                       src={getProfileImagePath(peer.profileImage.id)}
+                      width={48}
                     />
                     <div className="flex flex-1 flex-col">
                       <div className="flex items-center justify-between">
