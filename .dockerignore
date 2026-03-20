@@ -1,6 +1,29 @@
-node_modules
 .git
-*.log
+.github
+**/.git
 
+# 依存は Dockerfile 内の pnpm install で入れる
+**/node_modules
+**/.pnpm-store
+
+# クライアント成果物はコンテナ内で pnpm build する
+application/dist
+
+# リポジトリ内だがイメージ不要
+scoring-tool
+docs
+*.md
+
+# ログ・キャッシュ・ローカル設定
+*.log
+**/.cache
+**/.turbo
+**/coverage
+**/.env
+**/.env.*
+
+# シード生成用ソース（実行時は database.sqlite を使用）
 application/server/seeds
+
+# 運用データ
 application/server/upload
