@@ -39,6 +39,7 @@ searchRouter.get("/search", async (req, res) => {
   const textWhere = searchTerm ? { text: { [Op.like]: searchTerm } } : {};
 
   const postsByText = await Post.findAll({
+    subQuery: false,
     limit,
     offset,
     where: {
@@ -51,6 +52,7 @@ searchRouter.get("/search", async (req, res) => {
   let postsByUser: typeof postsByText = [];
   if (searchTerm) {
     postsByUser = await Post.findAll({
+      subQuery: false,
       include: [
         {
           association: "user",

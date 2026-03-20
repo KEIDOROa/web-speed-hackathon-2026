@@ -22,15 +22,8 @@ interface Props {
 const SEARCH_FIELD_LABEL =
   "検索 (例: キーワード since:2025-01-01 until:2025-12-31)";
 
-const SearchInput = ({
-  input,
-  meta,
-  submitFailed,
-  invalid,
-}: WrappedFieldProps & { submitFailed?: boolean; invalid?: boolean }) => {
-  const showError = Boolean(
-    meta.error && (meta.touched || (Boolean(submitFailed) && Boolean(invalid))),
-  );
+const SearchInput = ({ input, meta }: WrappedFieldProps) => {
+  const showError = Boolean(meta.error && (meta.touched || meta.submitFailed));
   return (
     <div className="flex flex-1 flex-col">
       <input
@@ -53,8 +46,6 @@ const SearchPageComponent = ({
   resultsLoading,
   resultsError,
   handleSubmit,
-  submitFailed,
-  invalid,
 }: Props & InjectedFormProps<SearchFormData, Props>) => {
   const [isNegative, setIsNegative] = useState(false);
 
@@ -108,12 +99,7 @@ const SearchPageComponent = ({
       <div className="bg-cax-surface p-4 shadow">
         <form onSubmit={handleSubmit(submitSearch)}>
           <div className="flex gap-2">
-            <Field
-              name="searchText"
-              component={SearchInput}
-              invalid={invalid}
-              submitFailed={submitFailed}
-            />
+            <Field name="searchText" component={SearchInput} />
             <Button variant="primary" type="submit">
               検索
             </Button>
