@@ -13,16 +13,12 @@ interface Props {
 }
 
 const NavigationAuthSkeleton = () => (
-  <>
-    {[0, 1, 2, 3].map((k) => (
-      <li key={k}>
-        <div className="flex h-12 w-12 flex-col items-center justify-center sm:h-auto sm:w-24 lg:h-auto lg:w-auto lg:flex-row lg:justify-start lg:rounded-full lg:px-4 lg:py-2">
-          <span className="bg-cax-surface-subtle block size-8 animate-pulse rounded-full lg:size-9" />
-          <span className="bg-cax-surface-subtle mt-1 hidden h-3 w-12 animate-pulse rounded sm:block lg:mt-0 lg:ml-2 lg:w-20" />
-        </div>
-      </li>
-    ))}
-  </>
+  <li>
+    <div className="flex h-12 w-12 flex-col items-center justify-center sm:h-auto sm:w-24 lg:h-auto lg:w-auto lg:flex-row lg:justify-start lg:rounded-full lg:px-4 lg:py-2">
+      <span className="bg-cax-surface-subtle block size-8 animate-pulse rounded-full lg:size-9" />
+      <span className="bg-cax-surface-subtle mt-1 hidden h-3 w-12 animate-pulse rounded sm:block lg:mt-0 lg:ml-2 lg:w-20" />
+    </div>
+  </li>
 );
 
 export const Navigation = ({

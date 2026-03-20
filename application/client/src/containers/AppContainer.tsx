@@ -35,18 +35,43 @@ export const AppContainer = () => {
     () => initialAuthFromBootstrap().activeUser,
   );
   const [authReady, setAuthReady] = useState(() => initialAuthFromBootstrap().authReady);
+
   useEffect(() => {
+    const applyBootstrap = () => {
+      const raw = (window as unknown as { __BOOTSTRAP_ME__?: { status: string; user?: Models.User } })
+        .__BOOTSTRAP_ME__;
+      if (raw?.status === "ok" && raw.user) {
+        setActiveUser(raw.user);
+        setAuthReady(true);
+      } else if (raw?.status === "guest") {
+        setActiveUser(null);
+        setAuthReady(true);
+      }
+    };
+    applyBootstrap();
+    window.addEventListener("cax-bootstrap-me", applyBootstrap);
+    return () => window.removeEventListener("cax-bootstrap-me", applyBootstrap);
+  }, []);
+
+  useEffect(() => {
+    // If bootstrap already resolved as guest (no auth cookie), skip redundant fetch
+    const bootstrap = (window as unknown as { __BOOTSTRAP_ME__?: { status: string } }).__BOOTSTRAP_ME__;
+    if (bootstrap?.status === "guest" && authReady) {
+      return;
+    }
     void fetchJSON<Models.User>("/api/v1/me")
       .then((user) => {
         setActiveUser(user);
         setAuthReady(true);
       })
-      .catch(() => {
-        setActiveUser(null);
-        clearAuthHintOnClient();
+      .catch((err) => {
+        if (err instanceof Response && err.status === 401) {
+          setActiveUser(null);
+          clearAuthHintOnClient();
+        }
         setAuthReady(true);
       });
-  }, [setActiveUser]);
+  }, []);
   const handleAuthSuccessUser = useCallback((user: Models.User) => {
     setActiveUser(user);
     setAuthReady(true);

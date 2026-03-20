@@ -181,7 +181,7 @@ const config = {
         },
       },
     },
-    concatenateModules: false,
+    concatenateModules: true,
     usedExports: true,
     providedExports: true,
     sideEffects: true,
