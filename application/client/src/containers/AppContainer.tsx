@@ -3,19 +3,19 @@ import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
+import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
+import { DirectMessageContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer";
+import { DirectMessageListContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer";
+import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
+import { SearchContainer } from "@web-speed-hackathon-2026/client/src/containers/SearchContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
-const DirectMessageListContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then(m => ({ default: m.DirectMessageListContainer })));
-const DirectMessageContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then(m => ({ default: m.DirectMessageContainer })));
-const SearchContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/SearchContainer").then(m => ({ default: m.SearchContainer })));
 const UserProfileContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer })));
 const PostContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/PostContainer").then(m => ({ default: m.PostContainer })));
 const TermContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/TermContainer").then(m => ({ default: m.TermContainer })));
 const CrokContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then(m => ({ default: m.CrokContainer })));
 const NotFoundContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/NotFoundContainer").then(m => ({ default: m.NotFoundContainer })));
-const AuthModalContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/AuthModalContainer").then(m => ({ default: m.AuthModalContainer })));
-const NewPostModalContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then(m => ({ default: m.NewPostModalContainer })));
 
 const LoadingFallback = () => (
   <div className="p-4">
@@ -83,10 +83,8 @@ export const AppContainer = () => {
         </Suspense>
       </AppPage>
 
-      <Suspense fallback={null}>
-        <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-        <NewPostModalContainer id={newPostModalId} />
-      </Suspense>
+      <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
+      <NewPostModalContainer id={newPostModalId} />
     </HelmetProvider>
   );
 };
