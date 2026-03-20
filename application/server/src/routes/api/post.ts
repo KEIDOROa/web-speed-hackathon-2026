@@ -5,13 +5,30 @@ import { Comment, Post } from "@web-speed-hackathon-2026/server/src/models";
 
 export const postRouter = Router();
 
-postRouter.get("/posts", async (req, res) => {
-  const posts = await Post.findAll({
-    limit: req.query["limit"] != null ? Number(req.query["limit"]) : undefined,
-    offset: req.query["offset"] != null ? Number(req.query["offset"]) : undefined,
-  });
+// APIレスポンスキャッシュ（posts一覧用）
+const postsCache = new Map<string, { data: string; timestamp: number }>();
+const POSTS_CACHE_TTL = 30_000; // 30秒
 
-  return res.status(200).type("application/json").send(posts);
+export function clearPostsCache() {
+  postsCache.clear();
+}
+
+postRouter.get("/posts", async (req, res) => {
+  const limit = req.query["limit"] != null ? Number(req.query["limit"]) : undefined;
+  const offset = req.query["offset"] != null ? Number(req.query["offset"]) : undefined;
+  const cacheKey = `${limit}:${offset}`;
+
+  const cached = postsCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < POSTS_CACHE_TTL) {
+    return res.status(200).type("application/json").send(cached.data);
+  }
+
+  const posts = await Post.findAll({ limit, offset });
+  const json = JSON.stringify(posts);
+
+  postsCache.set(cacheKey, { data: json, timestamp: Date.now() });
+
+  return res.status(200).type("application/json").send(json);
 });
 
 postRouter.get("/posts/:postId", async (req, res) => {
@@ -57,6 +74,9 @@ postRouter.post("/posts", async (req, res) => {
       ],
     },
   );
+
+  // 新しい投稿が作成されたのでキャッシュをクリア
+  postsCache.clear();
 
   return res.status(200).type("application/json").send(post);
 });
