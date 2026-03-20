@@ -10,8 +10,28 @@
   <body class="bg-cax-canvas text-cax-text">
     <script>
       window.__PREFETCH__ = {};
-      window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = fetch('/api/v1/posts?limit=30&offset=0').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      var postsP = fetch('/api/v1/posts?limit=30&offset=0').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = postsP;
       window.__PREFETCH__['/api/v1/me'] = fetch('/api/v1/me').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      postsP.then(function(posts) {
+        if (posts && posts[0]) {
+          if (posts[0].images && posts[0].images[0]) {
+            var link = document.createElement('link');
+            link.rel = 'preload';
+            link.as = 'image';
+            link.href = '/images/' + posts[0].images[0].id + '.jpg';
+            link.fetchPriority = 'high';
+            document.head.appendChild(link);
+          }
+          if (posts[0].user && posts[0].user.profileImage) {
+            var link2 = document.createElement('link');
+            link2.rel = 'preload';
+            link2.as = 'image';
+            link2.href = '/images/profiles/' + posts[0].user.profileImage.id + '.jpg';
+            document.head.appendChild(link2);
+          }
+        }
+      }).catch(function(){});
     </script>
     <div id="app">
       <div style="display:flex;justify-content:center;font-family:sans-serif">

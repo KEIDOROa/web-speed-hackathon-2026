@@ -1,10 +1,37 @@
 /// <reference types="webpack-dev-server" />
 const path = require("path");
+const fs = require("fs");
 
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require("webpack");
+
+// CSSをHTMLにインライン化するプラグイン
+class InlineCssPlugin {
+  apply(compiler) {
+    compiler.hooks.compilation.tap("InlineCssPlugin", (compilation) => {
+      HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
+        "InlineCssPlugin",
+        (data, cb) => {
+          const cssLinkRegex = /<link\s+href="([^"]*\.css)"\s+rel="stylesheet"\s*\/?>/g;
+          let html = data.html;
+          let match;
+          while ((match = cssLinkRegex.exec(data.html)) !== null) {
+            const cssPath = match[1].startsWith("/") ? match[1].slice(1) : match[1];
+            const cssAsset = compilation.assets[cssPath];
+            if (cssAsset) {
+              const cssContent = cssAsset.source();
+              html = html.replace(match[0], `<style>${cssContent}</style>`);
+            }
+          }
+          data.html = html;
+          cb(null, data);
+        }
+      );
+    });
+  }
+}
 
 const SRC_PATH = path.resolve(__dirname, "./src");
 const PUBLIC_PATH = path.resolve(__dirname, "../public");
@@ -94,6 +121,7 @@ const config = {
       template: path.resolve(SRC_PATH, "./index.html"),
       scriptLoading: "defer",
     }),
+    ...(isProduction ? [new InlineCssPlugin()] : []),
   ],
   resolve: {
     extensions: [".tsx", ".ts", ".mjs", ".cjs", ".jsx", ".js"],
