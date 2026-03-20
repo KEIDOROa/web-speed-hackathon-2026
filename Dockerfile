@@ -25,8 +25,9 @@ COPY ./application .
 
 RUN NODE_OPTIONS="--max-old-space-size=6144" pnpm build
 
+RUN cp -r node_modules/.pnpm/sqlite3@5.1.7 /tmp/sqlite3-backup
 RUN --mount=type=cache,target=/pnpm/store CI=true pnpm install --frozen-lockfile --prod --filter @web-speed-hackathon-2026/server
-RUN cd server && pnpm rebuild sqlite3
+RUN cp -r /tmp/sqlite3-backup node_modules/.pnpm/sqlite3@5.1.7
 
 FROM base
 
