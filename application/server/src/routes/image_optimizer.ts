@@ -23,7 +23,7 @@ function findImageFile(reqPath: string): string | null {
 
 export const imageOptimizerRouter = Router();
 
-imageOptimizerRouter.get("/images/*", async (req, res, next) => {
+imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
   try {
     const reqPath = req.path;
 
