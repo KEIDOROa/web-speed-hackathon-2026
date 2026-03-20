@@ -5,10 +5,15 @@ export async function fetchBinary(url: string): Promise<ArrayBuffer> {
 }
 
 export async function fetchJSON<T>(url: string): Promise<T> {
-  const prefetched = (window as any).__PREFETCH__?.[url];
-  if (prefetched) {
-    delete (window as any).__PREFETCH__[url];
-    return prefetched as Promise<T>;
+  const bag = (window as unknown as { __PREFETCH__?: Record<string, Promise<unknown>> }).__PREFETCH__;
+  const prefetched = bag?.[url];
+  if (prefetched != null && bag != null) {
+    delete bag[url];
+    try {
+      return (await prefetched) as T;
+    } catch {
+      /* index.html の fetchWithTimeout が先に失敗した場合は通常取得へ */
+    }
   }
   const response = await fetch(url, { method: "GET", credentials: "include" });
   if (!response.ok) throw response;
