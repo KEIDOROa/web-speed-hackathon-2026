@@ -1,0 +1,41 @@
+# fork 先で自分用 Fly アプリへデプロイする（fly.toml は変更しない）
+#
+# 事前準備:
+# 1. fly auth signup / fly auth login
+# 2. fly apps create <あなたのアプリ名> --org personal  など
+# 3. GitHub リポジトリに設定:
+#    - Secrets: FLY_API_TOKEN（fly tokens create org または fly auth token）
+#    - Variables: FLY_APP_NAME = 手順2のアプリ名
+#
+# 公式の PR レビュー用デプロイは deploy-pr.yml（別フロー）
+
+name: Deploy to Fly.io (fork)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: fly-deploy-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Variables / Secrets 未設定ならスキップ（fork 初期状態で赤バッジにしない）
+    if: ${{ vars.FLY_APP_NAME != '' && secrets.FLY_API_TOKEN != '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Setup flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@v1
+
+      - name: Deploy
+        run: fly deploy --remote-only --app "${FLY_APP_NAME}" --config fly.toml --dockerfile Dockerfile
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP_NAME: ${{ vars.FLY_APP_NAME }}
