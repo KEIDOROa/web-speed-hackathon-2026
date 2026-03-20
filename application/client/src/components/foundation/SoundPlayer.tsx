@@ -1,19 +1,68 @@
-import { ReactEventHandler, useCallback, useRef, useState } from "react";
+import { ReactEventHandler, useCallback, useEffect, useRef, useState } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
+import { SoundWaveSVG } from "@web-speed-hackathon-2026/client/src/components/foundation/SoundWaveSVG";
 import { getSoundPath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
   sound: Models.Sound;
 }
 
+async function fetchSoundBinary(url: string): Promise<ArrayBuffer> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const response = await fetch(url, { method: "GET", signal: controller.signal });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.arrayBuffer();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export const SoundPlayer = ({ sound }: Props) => {
   const soundUrl = getSoundPath(sound.id);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [isVisible, setIsVisible] = useState(false);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const [soundData, setSoundData] = useState<ArrayBuffer | null>(null);
+  useEffect(() => {
+    if (!isVisible) return;
+    let cancelled = false;
+    setSoundData(null);
+    void fetchSoundBinary(soundUrl)
+      .then((buf) => {
+        if (!cancelled) setSoundData(buf);
+      })
+      .catch(() => {
+        if (!cancelled) setSoundData(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [soundUrl, isVisible]);
 
   const [currentTimeRatio, setCurrentTimeRatio] = useState(0);
   const handleTimeUpdate = useCallback<ReactEventHandler<HTMLAudioElement>>((ev) => {
     const el = ev.currentTarget;
-    setCurrentTimeRatio(el.currentTime / el.duration);
+    const d = el.duration;
+    setCurrentTimeRatio(Number.isFinite(d) && d > 0 ? el.currentTime / d : 0);
   }, []);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -30,19 +79,22 @@ export const SoundPlayer = ({ sound }: Props) => {
   }, []);
 
   return (
-    <div className="bg-cax-surface-subtle flex h-full w-full items-center justify-center">
+    <div
+      ref={containerRef}
+      className="bg-cax-surface-subtle flex min-h-[4.5rem] w-full items-center justify-center gap-1 sm:min-h-0 sm:h-full"
+    >
       <audio ref={audioRef} loop={true} onTimeUpdate={handleTimeUpdate} src={soundUrl} preload="none" />
       <div className="p-2">
         <button
           aria-label={isPlaying ? "音声を一時停止" : "音声を再生"}
-          className="bg-cax-accent text-cax-surface-raised flex h-8 w-8 items-center justify-center rounded-full text-sm hover:opacity-75"
+          className="bg-cax-brand text-cax-surface-raised flex h-8 w-8 items-center justify-center rounded-full text-sm hover:opacity-75"
           onClick={handleTogglePlaying}
           type="button"
         >
           <FontAwesomeIcon iconType={isPlaying ? "pause" : "play"} styleType="solid" />
         </button>
       </div>
-      <div className="flex h-full min-w-0 shrink grow flex-col pt-2">
+      <div className="flex min-h-0 min-w-0 shrink grow flex-col justify-center pt-0 sm:pt-2">
         <p className="overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap">
           {sound.title}
         </p>
@@ -50,11 +102,15 @@ export const SoundPlayer = ({ sound }: Props) => {
           {sound.artist}
         </p>
         <div className="pt-2">
-          <div className="h-full w-full bg-cax-surface-subtle rounded" style={{ aspectRatio: "10 / 1" }}>
-            <div
-              className="h-full bg-cax-accent/30 rounded"
-              style={{ width: `${currentTimeRatio * 100}%` }}
-            />
+          <div
+            className="border-cax-border/30 bg-cax-surface relative w-full overflow-hidden rounded border"
+            style={{ aspectRatio: "10 / 1", minHeight: "2.75rem" }}
+          >
+            {soundData !== null ? (
+              <SoundWaveSVG playedRatio={currentTimeRatio} soundData={soundData} />
+            ) : (
+              <div className="bg-cax-brand/15 absolute inset-0 animate-pulse rounded" />
+            )}
           </div>
         </div>
       </div>

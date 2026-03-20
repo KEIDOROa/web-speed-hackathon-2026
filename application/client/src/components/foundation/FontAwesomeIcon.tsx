@@ -9,7 +9,9 @@ import {
   LogIn,
   Mail,
   Music,
+  Pause,
   Pencil,
+  Play,
   Scale,
   Search,
   Send,
@@ -20,6 +22,8 @@ import {
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   home: Home,
   search: Search,
+  play: Play,
+  pause: Pause,
   "sign-in-alt": LogIn,
   envelope: Mail,
   edit: Pencil,

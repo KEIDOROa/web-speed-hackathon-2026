@@ -12,8 +12,16 @@
   <body class="bg-cax-canvas text-cax-text">
     <script>
       window.__PREFETCH__ = {};
+      function fetchWithTimeout(url, ms) {
+        var ctrl = new AbortController();
+        var tid = setTimeout(function() { ctrl.abort(); }, ms);
+        return fetch(url, { signal: ctrl.signal }).then(function(r) {
+          clearTimeout(tid);
+          return r.ok ? r.json() : Promise.reject(r);
+        }).catch(function(e) { clearTimeout(tid); return Promise.reject(e); });
+      }
       window.__BOOTSTRAP_ME__ = { status: 'pending' };
-      var meP = fetch('/api/v1/me').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      var meP = fetchWithTimeout('/api/v1/me', 8000);
       window.__PREFETCH__['/api/v1/me'] = meP;
       meP.then(function(user) {
         window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
@@ -22,7 +30,7 @@
         window.__BOOTSTRAP_ME__ = { status: 'guest' };
         window.dispatchEvent(new Event('cax-bootstrap-me'));
       });
-      var postsP = fetch('/api/v1/posts?limit=30&offset=0').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      var postsP = fetchWithTimeout('/api/v1/posts?limit=30&offset=0', 8000);
       window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = postsP;
       postsP.then(function(posts) {
         if (!posts || !posts.length) return;

@@ -14,7 +14,7 @@ export function useWs<T>(url: string, onMessage: (event: T) => void) {
 
     let ws: WebSocket | null = null;
     let cancelled = false;
-    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let timeoutId: number | undefined;
 
     const connect = () => {
       if (cancelled) {

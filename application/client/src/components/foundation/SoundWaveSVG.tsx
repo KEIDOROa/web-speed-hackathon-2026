@@ -1,78 +1,146 @@
 import { useEffect, useRef, useState } from "react";
 
 interface ParsedData {
-  max: number;
   peaks: number[];
 }
 
-function mean(arr: (number | undefined)[]): number {
-  let sum = 0;
-  let count = 0;
-  for (const v of arr) {
-    if (v != null) {
-      sum += v;
-      count++;
+function maxInRange(arr: number[], start: number, end: number): number {
+  let m = 0;
+  const e = Math.min(end, arr.length);
+  for (let i = start; i < e; i++) {
+    const v = arr[i] as number;
+    if (v > m) {
+      m = v;
     }
   }
-  return count > 0 ? sum / count : 0;
+  return m;
 }
+
+const PEAK_BAR_COUNT = 100;
+const HEIGHT_GAMMA = 0.82;
+const VISUAL_HEIGHT_CAP = 0.52;
+const BAR_WIDTH = 0.52;
+const BAR_RX_MAX = 0.12;
 
 async function calculate(data: ArrayBuffer): Promise<ParsedData> {
   const audioCtx = new AudioContext();
+  try {
+    const buffer = await audioCtx.decodeAudioData(data.slice(0));
+    const leftData = Array.from(buffer.getChannelData(0), Math.abs);
+    const channels = buffer.numberOfChannels;
+    const normalized =
+      channels >= 2
+        ? (() => {
+            const rightData = Array.from(buffer.getChannelData(1), Math.abs);
+            return leftData.map((l, i) => (l + (rightData[i] ?? 0)) / 2);
+          })()
+        : leftData;
 
-  // 音声をデコードする
-  const buffer = await audioCtx.decodeAudioData(data.slice(0));
-  // 左の音声データの絶対値を取る
-  const leftData = Array.from(buffer.getChannelData(0), Math.abs);
-  // 右の音声データの絶対値を取る
-  const rightData = Array.from(buffer.getChannelData(1), Math.abs);
+    const chunkSize = Math.ceil(normalized.length / PEAK_BAR_COUNT);
+    const peaks: number[] = [];
+    for (let i = 0; i < normalized.length; i += chunkSize) {
+      const end = i + chunkSize;
+      peaks.push(maxInRange(normalized, i, end));
+    }
+    if (peaks.length > PEAK_BAR_COUNT) {
+      peaks.length = PEAK_BAR_COUNT;
+    }
 
-  // 左右の音声データの平均を取る
-  const normalized = leftData.map((l, i) => (l + (rightData[i] ?? 0)) / 2);
-  // 100 個の chunk に分ける
-  const chunkSize = Math.ceil(normalized.length / 100);
-  const peaks: number[] = [];
-  for (let i = 0; i < normalized.length; i += chunkSize) {
-    peaks.push(mean(normalized.slice(i, i + chunkSize)));
+    return { peaks };
+  } finally {
+    void audioCtx.close();
   }
-  // chunk の平均の中から最大値を取る
-  const max = Math.max(...peaks, 0);
-
-  return { max, peaks };
 }
 
 interface Props {
   soundData: ArrayBuffer;
+  playedRatio?: number;
 }
 
-export const SoundWaveSVG = ({ soundData }: Props) => {
-  const uniqueIdRef = useRef(Math.random().toString(16));
-  const [{ max, peaks }, setPeaks] = useState<ParsedData>({
-    max: 0,
-    peaks: [],
-  });
+function skeletonHeights(count: number): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < count; i++) {
+    const t = (i / count) * Math.PI * 2;
+    out.push(0.12 + 0.22 * (0.5 + 0.5 * Math.sin(t * 3.1)));
+  }
+  return out;
+}
+
+export const SoundWaveSVG = ({ soundData, playedRatio = 0 }: Props) => {
+  const uniqueIdRef = useRef(`sw-${Math.random().toString(16).slice(2)}`);
+  const [{ peaks, decodeSettled }, setModel] = useState<{
+    peaks: number[];
+    decodeSettled: boolean;
+  }>({ peaks: [], decodeSettled: false });
 
   useEffect(() => {
-    calculate(soundData).then(({ max, peaks }) => {
-      setPeaks({ max, peaks });
-    });
+    setModel({ peaks: [], decodeSettled: false });
+    void calculate(soundData)
+      .then(({ peaks: p }) => {
+        setModel({ peaks: p, decodeSettled: true });
+      })
+      .catch(() => {
+        setModel({ peaks: [], decodeSettled: true });
+      });
   }, [soundData]);
 
+  const displayPeaks = peaks.length > 0 ? peaks : skeletonHeights(PEAK_BAR_COUNT);
+
+  const minPeak = displayPeaks.length > 0 ? Math.min(...displayPeaks) : 0;
+  const maxPeak = displayPeaks.length > 0 ? Math.max(...displayPeaks) : 0;
+  const peakRange = maxPeak - minPeak;
+
+  const clipId = `${uniqueIdRef.current}-played`;
+  const safeRatio = Math.min(1, Math.max(0, playedRatio));
+  const clipWidth = safeRatio * PEAK_BAR_COUNT;
+
+  const barInset = (1 - BAR_WIDTH) / 2;
+  const isPlaceholder = decodeSettled && peaks.length === 0;
+  const dimOpacity = isPlaceholder ? 0.35 : 0.5;
+
+  const renderBars = (keySuffix: string) =>
+    displayPeaks.map((peak, idx) => {
+      let linear = 0;
+      if (peak > 0) {
+        if (peakRange > 1e-8) {
+          linear = (peak - minPeak) / peakRange;
+        } else {
+          linear = 0.42;
+        }
+      }
+      linear = Math.min(1, Math.max(0, linear));
+      const shaped = linear > 0 ? Math.pow(linear, HEIGHT_GAMMA) : 0;
+      const raw = VISUAL_HEIGHT_CAP * shaped;
+      const height = Math.max(raw, linear > 0 ? 0.014 : 0.006);
+      const rr = Math.min(BAR_RX_MAX, height / 2 - 1e-4);
+      const useRound = rr > 1e-4;
+      return (
+        <rect
+          key={`${uniqueIdRef.current}-${keySuffix}-${idx}`}
+          fill="currentColor"
+          height={height}
+          rx={useRound ? rr : undefined}
+          ry={useRound ? rr : undefined}
+          width={BAR_WIDTH}
+          x={idx + barInset}
+          y={1 - height}
+        />
+      );
+    });
+
   return (
-    <svg className="h-full w-full" preserveAspectRatio="none" viewBox="0 0 100 1">
-      {peaks.map((peak, idx) => {
-        const ratio = peak / max;
-        return (
-          <rect
-            key={`${uniqueIdRef.current}#${idx}`}
-            fill="var(--color-cax-accent)"
-            height={ratio}
-            width="1"
-            x={idx}
-            y={1 - ratio}
-          />
-        );
-      })}
+    <svg
+      className={`text-cax-accent absolute inset-0 block h-full w-full ${!decodeSettled ? "animate-pulse" : ""}`}
+      preserveAspectRatio="none"
+      viewBox={`0 0 ${PEAK_BAR_COUNT} 1`}
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <rect height="1" width={clipWidth} x="0" y="0" />
+        </clipPath>
+      </defs>
+      <g opacity={dimOpacity}>{renderBars("dim")}</g>
+      <g clipPath={`url(#${clipId})`}>{renderBars("played")}</g>
     </svg>
   );
 };
