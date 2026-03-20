@@ -13,7 +13,20 @@
       "Bash(NODE_PATH=/tmp/node_modules node -e \":*)",
       "Bash(ls -lhS scripts/react-vendor*.js scripts/vendor*.js scripts/main*.js styles/*.css)",
       "Bash(grep -rn \"moment\\\\|lodash\" /c/Github/TechTrain/web-speed-hackathon-2026/application/client/src --include=*.tsx --include=*.ts)",
-      "Bash(grep -rn \"fast-average-color\\\\|image-size\\\\|synchronous\\\\|blocking\" /c/Github/TechTrain/web-speed-hackathon-2026/application/client/src --include=*.tsx --include=*.ts)"
+      "Bash(grep -rn \"fast-average-color\\\\|image-size\\\\|synchronous\\\\|blocking\" /c/Github/TechTrain/web-speed-hackathon-2026/application/client/src --include=*.tsx --include=*.ts)",
+      "Bash(pnpm --filter \"@web-speed-hackathon-2026/e2e\" exec playwright test --reporter=line)",
+      "Bash(pnpm why:*)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s \"http://localhost:3000/search?q=%E5%86%99%E7%9C%9F\")",
+      "Bash(curl -s \"http://localhost:3000/api/v1/posts?limit=1\")",
+      "Bash(sqlite3 server/database.sqlite \".schema Users\")",
+      "Bash(curl:*)",
+      "Bash(tasklist)",
+      "Bash(\"C:\\\\Users\\\\keido\\\\AppData\\\\Local\\\\ms-playwright\\\\chromium-1155\\\\chrome-win\\\\chrome.exe\" --version)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill:*)",
+      "Bash(git checkout:*)",
+      "Bash(pnpm run:*)"
     ]
   }
 }

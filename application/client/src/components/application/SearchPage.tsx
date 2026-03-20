@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Field, InjectedFormProps, reduxForm, WrappedFieldProps } from "redux-form";
+import { Field, InjectedFormProps, reduxForm, SubmissionError, WrappedFieldProps } from "redux-form";
 
 import { Timeline } from "@web-speed-hackathon-2026/client/src/components/timeline/Timeline";
 import {
@@ -90,6 +90,10 @@ const SearchPageComponent = ({
   }, [parsed]);
 
   const submitSearch = (values: SearchFormData) => {
+    const errors = validate(values);
+    if (Object.keys(errors).length > 0) {
+      throw new SubmissionError(errors);
+    }
     const sanitizedText = sanitizeSearchText(values.searchText.trim());
     window.location.assign(`/search?q=${encodeURIComponent(sanitizedText)}`);
   };
