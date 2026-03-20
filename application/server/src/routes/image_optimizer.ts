@@ -46,7 +46,7 @@ imageOptimizerRouter.get("/images/*", async (req, res, next) => {
     const cached = cache.get(cacheKey);
     if (cached) {
       res.setHeader("Content-Type", cached.contentType);
-      res.setHeader("Cache-Control", "public, max-age=604800");
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
       res.setHeader("Vary", "Accept");
       res.send(cached.buffer);
       return;
@@ -72,7 +72,7 @@ imageOptimizerRouter.get("/images/*", async (req, res, next) => {
     cache.set(cacheKey, { buffer, contentType });
 
     res.setHeader("Content-Type", contentType);
-    res.setHeader("Cache-Control", "public, max-age=604800");
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.setHeader("Vary", "Accept");
     res.send(buffer);
   } catch {

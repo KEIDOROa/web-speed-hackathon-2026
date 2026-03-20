@@ -17,7 +17,8 @@ staticRouter.use(
   serveStatic(UPLOAD_PATH, {
     etag: true,
     lastModified: true,
-    maxAge: "7d",
+    maxAge: "1y",
+    immutable: true,
   }),
 );
 
@@ -25,7 +26,8 @@ staticRouter.use(
   serveStatic(PUBLIC_PATH, {
     etag: true,
     lastModified: true,
-    maxAge: "7d",
+    maxAge: "1y",
+    immutable: true,
   }),
 );
 
