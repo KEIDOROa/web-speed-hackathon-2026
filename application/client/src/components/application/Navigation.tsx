@@ -3,6 +3,7 @@ import { NavigationItem } from "@web-speed-hackathon-2026/client/src/components/
 import { DirectMessageNotificationBadge } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageNotificationBadge";
 import { CrokLogo } from "@web-speed-hackathon-2026/client/src/components/foundation/CrokLogo";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
+import { getCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
 
 interface Props {
   activeUser: Models.User | null;
@@ -11,6 +12,8 @@ interface Props {
   newPostModalId: string;
   onLogout: () => void;
 }
+
+const hasCachedLogin = getCachedUser() !== null;
 
 const NavigationAuthSkeleton = () => (
   <li>
@@ -42,7 +45,22 @@ export const Navigation = ({
             icon={<FontAwesomeIcon iconType="search" styleType="solid" />}
             text="検索"
           />
-          {!authReady ? <NavigationAuthSkeleton /> : null}
+          {!authReady && hasCachedLogin ? (
+            <>
+              <NavigationAuthSkeleton />
+              <NavigationAuthSkeleton />
+              <NavigationAuthSkeleton />
+              <NavigationAuthSkeleton />
+            </>
+          ) : null}
+          {!authReady && !hasCachedLogin ? (
+            <NavigationItem
+              icon={<FontAwesomeIcon iconType="sign-in-alt" styleType="solid" />}
+              text="サインイン"
+              command="show-modal"
+              commandfor={authModalId}
+            />
+          ) : null}
           {authReady && activeUser !== null ? (
             <NavigationItem
               badge={<DirectMessageNotificationBadge />}
@@ -88,7 +106,7 @@ export const Navigation = ({
           />
         </ul>
 
-        {!authReady ? (
+        {!authReady && hasCachedLogin ? (
           <div className="relative hidden lg:block lg:w-full lg:pb-2">
             <div className="bg-cax-surface-subtle mx-auto size-10 animate-pulse rounded-full" />
           </div>

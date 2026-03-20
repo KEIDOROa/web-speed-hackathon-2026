@@ -10,7 +10,7 @@ import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/cont
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { SearchContainer } from "@web-speed-hackathon-2026/client/src/containers/SearchContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
-import { initialAuthFromBootstrap } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
+import { initialAuthFromBootstrap, setCachedUser, clearCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
 import { clearAuthHintOnClient } from "@web-speed-hackathon-2026/client/src/utils/auth_hint";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
@@ -41,6 +41,7 @@ export const AppContainer = () => {
       const raw = (window as unknown as { __BOOTSTRAP_ME__?: { status: string; user?: Models.User } })
         .__BOOTSTRAP_ME__;
       if (raw?.status === "ok" && raw.user) {
+        setCachedUser(raw.user);
         setActiveUser(raw.user);
         setAuthReady(true);
       } else if (raw?.status === "guest") {
@@ -54,31 +55,30 @@ export const AppContainer = () => {
   }, []);
 
   useEffect(() => {
-    // If bootstrap already resolved as guest (no auth cookie), skip redundant fetch
-    const bootstrap = (window as unknown as { __BOOTSTRAP_ME__?: { status: string } }).__BOOTSTRAP_ME__;
-    if (bootstrap?.status === "guest" && authReady) {
-      return;
-    }
     void fetchJSON<Models.User>("/api/v1/me")
       .then((user) => {
+        setCachedUser(user);
         setActiveUser(user);
         setAuthReady(true);
       })
       .catch((err) => {
         if (err instanceof Response && err.status === 401) {
           setActiveUser(null);
+          clearCachedUser();
           clearAuthHintOnClient();
         }
         setAuthReady(true);
       });
   }, []);
   const handleAuthSuccessUser = useCallback((user: Models.User) => {
+    setCachedUser(user);
     setActiveUser(user);
     setAuthReady(true);
   }, []);
 
   const handleLogout = useCallback(async () => {
     await sendJSON("/api/v1/signout", {});
+    clearCachedUser();
     clearAuthHintOnClient();
     setActiveUser(null);
     navigate("/");

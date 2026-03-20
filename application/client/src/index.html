@@ -12,21 +12,16 @@
   <body class="bg-cax-canvas text-cax-text">
     <script>
       window.__PREFETCH__ = {};
-      var hasAuthCookie = document.cookie.split(';').some(function(c) { return c.trim().indexOf('cax_authed=') === 0; });
-      if (!hasAuthCookie) {
+      window.__BOOTSTRAP_ME__ = { status: 'pending' };
+      var meP = fetch('/api/v1/me').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
+      window.__PREFETCH__['/api/v1/me'] = meP;
+      meP.then(function(user) {
+        window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
+        window.dispatchEvent(new Event('cax-bootstrap-me'));
+      }).catch(function() {
         window.__BOOTSTRAP_ME__ = { status: 'guest' };
-      } else {
-        window.__BOOTSTRAP_ME__ = { status: 'pending' };
-        var meP = fetch('/api/v1/me').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
-        window.__PREFETCH__['/api/v1/me'] = meP;
-        meP.then(function(user) {
-          window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
-          window.dispatchEvent(new Event('cax-bootstrap-me'));
-        }).catch(function() {
-          window.__BOOTSTRAP_ME__ = { status: 'guest' };
-          window.dispatchEvent(new Event('cax-bootstrap-me'));
-        });
-      }
+        window.dispatchEvent(new Event('cax-bootstrap-me'));
+      });
       var postsP = fetch('/api/v1/posts?limit=30&offset=0').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
       window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = postsP;
       postsP.then(function(posts) {
