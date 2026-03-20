@@ -13,8 +13,6 @@ interface Props {
   onLogout: () => void;
 }
 
-const hasCachedLogin = getCachedUser() !== null;
-
 const NavigationAuthSkeleton = () => (
   <li>
     <div className="flex h-12 w-12 flex-col items-center justify-center sm:h-auto sm:w-24 lg:h-auto lg:w-auto lg:flex-row lg:justify-start lg:rounded-full lg:px-4 lg:py-2">
@@ -31,6 +29,8 @@ export const Navigation = ({
   newPostModalId,
   onLogout,
 }: Props) => {
+  const hasCachedLogin = getCachedUser() !== null;
+
   return (
     <nav className="border-cax-border bg-cax-surface fixed right-0 bottom-0 left-0 z-10 h-12 border-t lg:relative lg:h-full lg:w-48 lg:border-t-0 lg:border-r">
       <div className="relative grid grid-flow-col items-center justify-evenly lg:fixed lg:flex lg:h-full lg:w-48 lg:flex-col lg:justify-between lg:p-2">

@@ -1,5 +1,7 @@
 import { useEffect, useEffectEvent } from "react";
 
+const WS_CONNECT_AFTER_LOAD_MS = 2500;
+
 export function useWs<T>(url: string, onMessage: (event: T) => void) {
   const handleMessage = useEffectEvent((event: MessageEvent) => {
     onMessage(JSON.parse(event.data));
@@ -9,12 +11,39 @@ export function useWs<T>(url: string, onMessage: (event: T) => void) {
     if (url === "") {
       return;
     }
-    const ws = new WebSocket(url);
-    ws.addEventListener("message", handleMessage);
+
+    let ws: WebSocket | null = null;
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const connect = () => {
+      if (cancelled) {
+        return;
+      }
+      ws = new WebSocket(url);
+      ws.addEventListener("message", handleMessage);
+    };
+
+    const scheduleConnect = () => {
+      timeoutId = window.setTimeout(connect, WS_CONNECT_AFTER_LOAD_MS);
+    };
+
+    if (document.readyState === "complete") {
+      scheduleConnect();
+    } else {
+      window.addEventListener("load", scheduleConnect, { once: true });
+    }
 
     return () => {
-      ws.removeEventListener("message", handleMessage);
-      ws.close();
+      cancelled = true;
+      window.removeEventListener("load", scheduleConnect);
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+      if (ws !== null) {
+        ws.removeEventListener("message", handleMessage);
+        ws.close();
+      }
     };
   }, [url]);
 }
