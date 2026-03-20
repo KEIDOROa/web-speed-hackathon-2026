@@ -97,7 +97,7 @@ const config = {
   plugins: [
     // negaposi-analyzer-jaのpn_ja.dic.jsonがnpmパッケージのfilesに含まれていないため、ローカルコピーを使う
     new webpack.NormalModuleReplacementPlugin(
-      /negaposi-analyzer-ja[\\/]dict[\\/]pn_ja\.dic\.json$/,
+      /pn_ja\.dic\.json$/,
       path.resolve(SRC_PATH, "utils/pn_ja.dic.json"),
     ),
     new webpack.ProvidePlugin({
