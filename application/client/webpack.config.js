@@ -126,14 +126,6 @@ const config = {
   },
   optimization: {
     minimize: isProduction,
-    minimizer: isProduction ? [
-      new (require("terser-webpack-plugin"))({
-        parallel: false,
-        terserOptions: {
-          compress: { passes: 1 },
-        },
-      }),
-    ] : undefined,
     splitChunks: {
       chunks: "all",
       maxInitialRequests: 20,
