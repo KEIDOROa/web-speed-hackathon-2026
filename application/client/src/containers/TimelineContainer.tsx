@@ -13,7 +13,13 @@ export const TimelineContainer = () => {
       <Helmet>
         <title>タイムライン - CaX</title>
       </Helmet>
-      <TimelinePage timeline={posts} />
+      {posts.length === 0 ? (
+        <div className="p-4">
+          <p className="text-cax-text-muted text-2xl">タイムラインを読み込み中...</p>
+        </div>
+      ) : (
+        <TimelinePage timeline={posts} />
+      )}
     </InfiniteScroll>
   );
 };

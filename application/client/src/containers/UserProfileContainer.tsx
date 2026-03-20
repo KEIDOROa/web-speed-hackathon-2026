@@ -22,9 +22,14 @@ export const UserProfileContainer = () => {
 
   if (isLoadingUser) {
     return (
-      <Helmet>
-        <title>読込中 - CaX</title>
-      </Helmet>
+      <>
+        <Helmet>
+          <title>読込中 - CaX</title>
+        </Helmet>
+        <div className="p-4">
+          <p className="text-cax-text-muted text-2xl">プロフィールを読み込み中...</p>
+        </div>
+      </>
     );
   }
 
