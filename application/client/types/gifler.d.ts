@@ -5,17 +5,24 @@ declare module "gifler" {
     pixels: Uint8ClampedArray;
   }
 
-  class Animator {
+  export class Animator {
     constructor(reader: GifReader, frames: FrameWithPixels[]);
-    start(): void;
-    stop(): void;
-    animateInCanvas(canvas: HTMLCanvasElement): void;
-    onFrame(frame: FrameWithPixels): void;
+    start(): Animator;
+    stop(): Animator;
+    animateInCanvas(canvas: HTMLCanvasElement, setDimensions?: boolean): Animator;
+    running(): boolean;
+    reset(): Animator;
   }
 
-  class Decoder {
+  export class Decoder {
     static decodeFramesSync(reader: GifReader): FrameWithPixels[];
   }
 
-  export { Animator, Decoder };
+  interface GifHandle {
+    animate(selector: string | HTMLCanvasElement): Promise<Animator>;
+  }
+
+  function gifler(url: string): GifHandle;
+
+  export = gifler;
 }

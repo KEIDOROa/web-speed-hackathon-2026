@@ -6,14 +6,21 @@ import { useInfiniteFetch } from "@web-speed-hackathon-2026/client/src/hooks/use
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 export const TimelineContainer = () => {
-  const { data: posts, fetchMore } = useInfiniteFetch<Models.Post>("/api/v1/posts", fetchJSON);
+  const { data: posts, fetchMore, isLoading, error } = useInfiniteFetch<Models.Post>(
+    "/api/v1/posts",
+    fetchJSON,
+  );
 
   return (
     <InfiniteScroll fetchMore={fetchMore} items={posts}>
       <Helmet>
         <title>タイムライン - CaX</title>
       </Helmet>
-      {posts.length === 0 ? (
+      {error != null && posts.length === 0 ? (
+        <div className="p-4">
+          <p className="text-cax-danger text-2xl">タイムラインを読み込めませんでした</p>
+        </div>
+      ) : isLoading && posts.length === 0 ? (
         <div className="p-4">
           <p className="text-cax-text-muted text-2xl">タイムラインを読み込み中...</p>
         </div>

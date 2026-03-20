@@ -29,7 +29,7 @@ export const ImageArea = ({ images, priority = false }: Props) => {
             >
               <CoveredImage
                 imageId={image.id}
-                priority={priority && idx === 0}
+                priority={priority}
                 sizes={images.length === 1 ? IMAGE_SIZES_FULL : IMAGE_SIZES_GRID}
               />
             </div>

@@ -87,7 +87,14 @@ export const SoundPlayer = ({ sound }: Props) => {
             {soundData !== null ? (
               <SoundWaveSVG playedRatio={currentTimeRatio} soundData={soundData} />
             ) : (
-              <div className="bg-cax-brand/15 absolute inset-0 animate-pulse rounded" />
+              <svg
+                aria-hidden
+                className="text-cax-accent absolute inset-0 block h-full w-full animate-pulse"
+                preserveAspectRatio="none"
+                viewBox="0 0 100 1"
+              >
+                <rect fill="currentColor" height="1" opacity={0.2} width="100" x="0" y="0" />
+              </svg>
             )}
           </div>
         </div>

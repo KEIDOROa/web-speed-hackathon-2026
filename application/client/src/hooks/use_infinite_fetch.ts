@@ -18,10 +18,14 @@ export function useInfiniteFetch<T>(
   const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
     data: [],
     error: null,
-    isLoading: true,
+    isLoading: Boolean(apiPath),
   });
 
   const fetchMore = useCallback(() => {
+    if (!apiPath) {
+      return;
+    }
+
     const { isLoading, offset } = internalRef.current;
     if (isLoading) {
       return;
@@ -66,18 +70,28 @@ export function useInfiniteFetch<T>(
   }, [apiPath, fetcher]);
 
   useEffect(() => {
-    setResult(() => ({
-      data: [],
-      error: null,
-      isLoading: true,
-    }));
     internalRef.current = {
       isLoading: false,
       offset: 0,
     };
 
+    if (!apiPath) {
+      setResult({
+        data: [],
+        error: null,
+        isLoading: false,
+      });
+      return;
+    }
+
+    setResult({
+      data: [],
+      error: null,
+      isLoading: true,
+    });
+
     fetchMore();
-  }, [fetchMore]);
+  }, [apiPath, fetchMore]);
 
   return {
     ...result,
