@@ -24,8 +24,8 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # Variables / Secrets 未設定ならスキップ（fork 初期状態で赤バッジにしない）
-    if: ${{ vars.FLY_APP_NAME != '' && secrets.FLY_API_TOKEN != '' }}
+    # ジョブの if では secrets を参照できないため vars のみ。トークン未設定時は deploy ステップが失敗する
+    if: ${{ vars.FLY_APP_NAME != '' }}
 
     steps:
       - name: Checkout
