@@ -106,7 +106,7 @@ export const DirectMessagePage = ({
           decoding="async"
           fetchPriority="high"
           height={48}
-          src={getProfileImagePath(peer.profileImage.id)}
+          src={getProfileImagePath(peer.profileImage.id, 96)}
           width={48}
         />
         <div className="min-w-0">

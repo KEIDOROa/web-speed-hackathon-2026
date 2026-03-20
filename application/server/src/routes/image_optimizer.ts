@@ -11,6 +11,9 @@ const cache = new Map<string, { buffer: Buffer; contentType: string }>();
 const POST_IMAGE_MAX_WIDTH = 800;
 const PROFILE_IMAGE_MAX_WIDTH = 128;
 
+const POST_WIDTH_WHITELIST = new Set([360, 480, 640, 800]);
+const PROFILE_WIDTH_WHITELIST = new Set([64, 96, 128]);
+
 function findImageFile(reqPath: string): string | null {
   const uploadFile = path.join(UPLOAD_PATH, reqPath);
   if (fs.existsSync(uploadFile)) return uploadFile;
@@ -40,7 +43,16 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
     const contentType = supportsAvif ? "image/avif" : supportsWebp ? "image/webp" : "image/jpeg";
 
     const isProfile = reqPath.includes("/profiles/");
-    const maxWidth = isProfile ? PROFILE_IMAGE_MAX_WIDTH : POST_IMAGE_MAX_WIDTH;
+    const wQuery = req.query["w"];
+    const wParsed = typeof wQuery === "string" ? Number.parseInt(wQuery, 10) : NaN;
+
+    let maxWidth = isProfile ? PROFILE_IMAGE_MAX_WIDTH : POST_IMAGE_MAX_WIDTH;
+    if (isProfile && Number.isFinite(wParsed) && PROFILE_WIDTH_WHITELIST.has(wParsed)) {
+      maxWidth = wParsed;
+    }
+    if (!isProfile && Number.isFinite(wParsed) && POST_WIDTH_WHITELIST.has(wParsed)) {
+      maxWidth = wParsed;
+    }
 
     const cacheKey = `${reqPath}:${format}:${maxWidth}`;
     const cached = cache.get(cacheKey);
@@ -59,12 +71,13 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
 
     let pipeline = sharp(filePath).resize({ width: maxWidth, withoutEnlargement: true });
 
+    const compact = maxWidth <= 480;
     if (format === "avif") {
-      pipeline = pipeline.avif({ quality: 60 });
+      pipeline = pipeline.avif({ quality: compact ? 52 : 58 });
     } else if (format === "webp") {
-      pipeline = pipeline.webp({ quality: 75 });
+      pipeline = pipeline.webp({ quality: compact ? 68 : 74 });
     } else {
-      pipeline = pipeline.jpeg({ quality: 75 });
+      pipeline = pipeline.jpeg({ quality: compact ? 68 : 74, mozjpeg: true });
     }
 
     const buffer = await pipeline.toBuffer();

@@ -1,19 +1,22 @@
-import { MouseEvent, useCallback, useId } from "react";
+import { MouseEvent, useCallback, useId, useMemo } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
+import { buildPostImageResponsive } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
-  src: string;
+  imageId: string;
   priority?: boolean;
+  sizes: string;
 }
 
 /**
  * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します
  */
-export const CoveredImage = ({ src, priority = false }: Props) => {
+export const CoveredImage = ({ imageId, priority = false, sizes }: Props) => {
   const dialogId = useId();
-  // ダイアログの背景をクリックしたときに投稿詳細ページに遷移しないようにする
+  const { src, srcSet } = useMemo(() => buildPostImageResponsive(imageId), [imageId]);
+
   const handleDialogClick = useCallback((ev: MouseEvent<HTMLDialogElement>) => {
     ev.stopPropagation();
   }, []);
@@ -23,10 +26,12 @@ export const CoveredImage = ({ src, priority = false }: Props) => {
       <img
         alt=""
         className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-cover"
-        src={src}
-        loading={priority ? "eager" : "lazy"}
         decoding="async"
         fetchPriority={priority ? "high" : "auto"}
+        loading={priority ? "eager" : "lazy"}
+        sizes={sizes}
+        src={src}
+        srcSet={srcSet}
       />
 
       <button

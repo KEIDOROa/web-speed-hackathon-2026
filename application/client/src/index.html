@@ -24,7 +24,7 @@
           var link = document.createElement('link');
           link.rel = 'preload';
           link.as = 'image';
-          link.href = '/images/' + postWithImage.images[0].id + '.jpg';
+          link.href = '/images/' + postWithImage.images[0].id + '.jpg?w=480';
           link.fetchPriority = 'high';
           document.head.appendChild(link);
         }
@@ -33,7 +33,7 @@
           var link2 = document.createElement('link');
           link2.rel = 'preload';
           link2.as = 'image';
-          link2.href = '/images/profiles/' + first.user.profileImage.id + '.jpg';
+          link2.href = '/images/profiles/' + first.user.profileImage.id + '.jpg?w=96';
           link2.fetchPriority = 'high';
           document.head.appendChild(link2);
         }

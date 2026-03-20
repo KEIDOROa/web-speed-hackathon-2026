@@ -23,7 +23,7 @@ export const PostItem = ({ post, lcpPriority = false }: Props) => {
             >
               <img
                 alt={post.user.profileImage.alt}
-                src={getProfileImagePath(post.user.profileImage.id)}
+                src={getProfileImagePath(post.user.profileImage.id, 96)}
                 decoding="async"
                 fetchPriority={lcpPriority ? "high" : "auto"}
                 height={64}
