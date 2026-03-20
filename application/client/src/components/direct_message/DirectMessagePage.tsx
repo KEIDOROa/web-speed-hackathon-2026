@@ -7,7 +7,7 @@ import {
   useState,
   KeyboardEvent,
   FormEvent,
-  useEffect,
+  useLayoutEffect,
 } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
@@ -43,7 +43,6 @@ export const DirectMessagePage = ({
   const [text, setText] = useState("");
   const textAreaRows = Math.min((text || "").split("\n").length, 5);
   const isInvalid = text.trim().length === 0;
-  const scrollHeightRef = useRef(0);
 
   const handleChange = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -73,21 +72,16 @@ export const DirectMessagePage = ({
     [onSubmit, text],
   );
 
-  useEffect(() => {
-    // 新しいメッセージが来たら一番下にスクロールする
-    const observer = new MutationObserver(() => {
-      const height = document.body.offsetHeight;
-      if (height !== scrollHeightRef.current) {
-        scrollHeightRef.current = height;
-        window.scrollTo(0, height);
-      }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    // 初回スクロール
-    window.scrollTo(0, document.body.offsetHeight);
+  const lastMessage = conversation.messages.at(-1);
+  const scrollKey =
+    conversation.messages.length === 0 ? "empty" : (lastMessage?.id ?? "");
 
-    return () => observer.disconnect();
-  }, []);
+  useLayoutEffect(() => {
+    const id = requestAnimationFrame(() => {
+      window.scrollTo(0, document.body.offsetHeight);
+    });
+    return () => cancelAnimationFrame(id);
+  }, [scrollKey]);
 
   if (conversationError != null) {
     return (

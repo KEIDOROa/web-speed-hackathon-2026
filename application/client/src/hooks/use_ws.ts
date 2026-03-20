@@ -4,7 +4,11 @@ const WS_CONNECT_AFTER_LOAD_MS = 2500;
 
 export function useWs<T>(url: string, onMessage: (event: T) => void) {
   const handleMessage = useEffectEvent((event: MessageEvent) => {
-    onMessage(JSON.parse(event.data));
+    try {
+      onMessage(JSON.parse(event.data as string) as T);
+    } catch {
+      /* 非JSONのフレームは無視 */
+    }
   });
 
   useEffect(() => {
