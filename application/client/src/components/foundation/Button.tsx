@@ -13,6 +13,7 @@ export const Button = ({
   rightItem,
   className,
   children,
+  type = "button",
   ...props
 }: Props) => {
   return (
@@ -28,7 +29,7 @@ export const Button = ({
         },
         className,
       )}
-      type="button"
+      type={type}
       {...props}
     >
       {leftItem}

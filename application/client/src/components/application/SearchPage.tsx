@@ -15,13 +15,22 @@ import { Button } from "../foundation/Button";
 interface Props {
   query: string;
   results: Models.Post[];
+  resultsLoading: boolean;
+  resultsError: Error | null;
 }
 
 const SEARCH_FIELD_LABEL =
   "検索 (例: キーワード since:2025-01-01 until:2025-12-31)";
 
-const SearchInput = ({ input, meta }: WrappedFieldProps) => {
-  const showError = Boolean(meta.error && (meta.touched || meta.submitFailed));
+const SearchInput = ({
+  input,
+  meta,
+  submitFailed,
+  invalid,
+}: WrappedFieldProps & { submitFailed?: boolean; invalid?: boolean }) => {
+  const showError = Boolean(
+    meta.error && (meta.touched || (Boolean(submitFailed) && Boolean(invalid))),
+  );
   return (
     <div className="flex flex-1 flex-col">
       <input
@@ -41,7 +50,11 @@ const SearchInput = ({ input, meta }: WrappedFieldProps) => {
 const SearchPageComponent = ({
   query,
   results,
+  resultsLoading,
+  resultsError,
   handleSubmit,
+  submitFailed,
+  invalid,
 }: Props & InjectedFormProps<SearchFormData, Props>) => {
   const [isNegative, setIsNegative] = useState(false);
 
@@ -85,7 +98,7 @@ const SearchPageComponent = ({
     return parts.join(" ");
   }, [parsed]);
 
-  const onSubmit = (values: SearchFormData) => {
+  const submitSearch = (values: SearchFormData) => {
     const sanitizedText = sanitizeSearchText(values.searchText.trim());
     window.location.assign(`/search?q=${encodeURIComponent(sanitizedText)}`);
   };
@@ -93,9 +106,14 @@ const SearchPageComponent = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-cax-surface p-4 shadow">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(submitSearch)}>
           <div className="flex gap-2">
-            <Field name="searchText" component={SearchInput} />
+            <Field
+              name="searchText"
+              component={SearchInput}
+              invalid={invalid}
+              submitFailed={submitFailed}
+            />
             <Button variant="primary" type="submit">
               検索
             </Button>
@@ -125,13 +143,23 @@ const SearchPageComponent = ({
         </article>
       )}
 
-      {query && results.length === 0 ? (
-        <div className="text-cax-text-muted flex items-center justify-center p-8">
-          検索結果が見つかりませんでした
-        </div>
-      ) : (
-        <Timeline timeline={results} />
-      )}
+      {query ? (
+        resultsLoading && results.length === 0 ? (
+          <div className="text-cax-text-muted flex items-center justify-center p-8">
+            検索結果を読み込み中...
+          </div>
+        ) : resultsError != null && results.length === 0 ? (
+          <div className="text-cax-danger flex items-center justify-center p-8">
+            検索結果を読み込めませんでした
+          </div>
+        ) : !resultsLoading && results.length === 0 ? (
+          <div className="text-cax-text-muted flex items-center justify-center p-8">
+            検索結果が見つかりませんでした
+          </div>
+        ) : (
+          <Timeline timeline={results} />
+        )
+      ) : null}
     </div>
   );
 };

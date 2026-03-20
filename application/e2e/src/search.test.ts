@@ -51,7 +51,7 @@ test.describe("検索ページ", () => {
   test.describe("バリデーション", () => {
     test("空のまま検索するとエラーが表示される", async ({ page }) => {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.goto("/search");
+      await page.goto("/search", { waitUntil: "domcontentloaded" });
 
       await page.getByRole("button", { name: "検索" }).click();
 
@@ -93,7 +93,7 @@ test.describe("検索ページ", () => {
 
   test("検索結果が表示される", async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto("/search?q=写真");
+    await page.goto("/search?q=写真", { waitUntil: "domcontentloaded" });
 
     await expect(page.locator("main article").first()).toBeVisible({ timeout: 30_000 });
 
@@ -240,7 +240,7 @@ test.describe("検索ページ", () => {
 
   test("検索結果のタイムラインが無限スクロールで追加読み込みされること", async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
-    await page.goto("/search?q=写真");
+    await page.goto("/search?q=写真", { waitUntil: "domcontentloaded" });
 
     await expect(page.locator("main article").first()).toBeVisible({ timeout: 30_000 });
 

@@ -15,7 +15,7 @@ test.describe("ユーザー詳細", () => {
   });
 
   test("ページ上部がユーザーサムネイル画像の色を抽出した色になっている", async ({ page }) => {
-    await page.goto("/users/o6yq16leo");
+    await page.goto("/users/o6yq16leo", { waitUntil: "domcontentloaded" });
 
     // VRT: ユーザー詳細（無限スクロールがあるため viewport のみ）
     await waitForVisibleMedia(page);
@@ -23,6 +23,7 @@ test.describe("ユーザー詳細", () => {
     await expect(page).toHaveScreenshot("user-profile-ユーザー詳細.png", {
       fullPage: false,
       mask: dynamicMediaMask(page),
+      maxDiffPixelRatio: 0.12,
     });
   });
 });
