@@ -1,5 +1,4 @@
 import classNames from "classnames";
-import moment from "moment";
 import {
   ChangeEvent,
   useCallback,
@@ -13,6 +12,7 @@ import {
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
+import { formatTime } from "@web-speed-hackathon-2026/client/src/utils/date";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
@@ -74,15 +74,19 @@ export const DirectMessagePage = ({
   );
 
   useEffect(() => {
-    const id = setInterval(() => {
-      const height = Number(window.getComputedStyle(document.body).height.replace("px", ""));
+    // 新しいメッセージが来たら一番下にスクロールする
+    const observer = new MutationObserver(() => {
+      const height = document.body.offsetHeight;
       if (height !== scrollHeightRef.current) {
         scrollHeightRef.current = height;
         window.scrollTo(0, height);
       }
-    }, 1);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    // 初回スクロール
+    window.scrollTo(0, document.body.offsetHeight);
 
-    return () => clearInterval(id);
+    return () => observer.disconnect();
   }, []);
 
   if (conversationError != null) {
@@ -141,7 +145,7 @@ export const DirectMessagePage = ({
                 </p>
                 <div className="flex gap-1 text-xs">
                   <time dateTime={message.createdAt}>
-                    {moment(message.createdAt).locale("ja").format("HH:mm")}
+                    {formatTime(message.createdAt)}
                   </time>
                   {isActiveUserSend && message.isRead && (
                     <span className="text-cax-text-muted">既読</span>

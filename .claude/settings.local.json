@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(pnpm add:*)",
-      "Bash(npx webpack:*)"
+      "Bash(npx webpack:*)",
+      "Bash(find /c/Github/TechTrain/web-speed-hackathon-2026/application/public -type f -exec ls -lh {})",
+      "Bash(2)",
+      "Bash(pip install:*)",
+      "Bash(pip3 install:*)",
+      "Bash(npx -y fonttools)",
+      "Bash(npx -y wawoff2 --help)",
+      "Bash(node:*)",
+      "Bash(NODE_PATH=/tmp/node_modules node -e \":*)",
+      "Bash(ls -lhS scripts/react-vendor*.js scripts/vendor*.js scripts/main*.js styles/*.css)"
     ]
   }
 }
