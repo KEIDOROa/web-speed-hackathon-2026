@@ -18,11 +18,12 @@ export const PostItem = ({ post, lcpPriority = false }: Props) => {
         <div className="flex items-center justify-center">
           <div className="shrink-0 grow-0 pr-2">
             <Link
+              aria-label={`${post.user.name}（@${post.user.username}）のプロフィール`}
               className="border-cax-border bg-cax-surface-subtle block h-14 w-14 overflow-hidden rounded-full border hover:opacity-95 sm:h-16 sm:w-16"
               to={`/users/${post.user.username}`}
             >
               <img
-                alt={post.user.profileImage.alt}
+                alt={post.user.profileImage.alt || `${post.user.name}のプロフィール画像`}
                 src={getProfileImagePath(post.user.profileImage.id, 96)}
                 decoding="async"
                 fetchPriority={lcpPriority ? "high" : "auto"}

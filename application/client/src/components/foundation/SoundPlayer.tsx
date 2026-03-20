@@ -34,6 +34,7 @@ export const SoundPlayer = ({ sound }: Props) => {
       <audio ref={audioRef} loop={true} onTimeUpdate={handleTimeUpdate} src={soundUrl} preload="none" />
       <div className="p-2">
         <button
+          aria-label={isPlaying ? "音声を一時停止" : "音声を再生"}
           className="bg-cax-accent text-cax-surface-raised flex h-8 w-8 items-center justify-center rounded-full text-sm hover:opacity-75"
           onClick={handleTogglePlaying}
           type="button"

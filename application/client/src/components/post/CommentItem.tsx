@@ -13,11 +13,12 @@ export const CommentItem = ({ comment }: Props) => {
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
         <div className="shrink-0 grow-0 pr-2 sm:pr-4">
           <Link
+            aria-label={`${comment.user.name}（@${comment.user.username}）のプロフィール`}
             className="border-cax-border bg-cax-surface-subtle block h-8 w-8 overflow-hidden rounded-full border hover:opacity-75 sm:h-12 sm:w-12"
             to={`/users/${comment.user.username}`}
           >
             <img
-              alt={comment.user.profileImage.alt}
+              alt={comment.user.profileImage.alt || `${comment.user.name}のプロフィール画像`}
               src={getProfileImagePath(comment.user.profileImage.id, 96)}
             />
           </Link>
