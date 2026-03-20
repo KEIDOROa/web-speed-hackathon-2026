@@ -2,6 +2,7 @@ import { Router } from "express";
 import httpErrors from "http-errors";
 import { UniqueConstraintError, ValidationError } from "sequelize";
 
+import { clearAuthHintCookie, setAuthHintCookie } from "@web-speed-hackathon-2026/server/src/auth_hint_cookie";
 import { User } from "@web-speed-hackathon-2026/server/src/models";
 
 export const authRouter = Router();
@@ -12,6 +13,7 @@ authRouter.post("/signup", async (req, res) => {
     const user = await User.findByPk(userId);
 
     req.session.userId = userId;
+    setAuthHintCookie(res);
     return res.status(200).type("application/json").send(user);
   } catch (err) {
     if (err instanceof UniqueConstraintError) {
@@ -39,10 +41,12 @@ authRouter.post("/signin", async (req, res) => {
   }
 
   req.session.userId = user.id;
+  setAuthHintCookie(res);
   return res.status(200).type("application/json").send(user);
 });
 
 authRouter.post("/signout", async (req, res) => {
   req.session.userId = undefined;
+  clearAuthHintCookie(res);
   return res.status(200).type("application/json").send({});
 });

@@ -1,20 +1,24 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
 
+import { clearAuthHintCookie, setAuthHintCookie } from "@web-speed-hackathon-2026/server/src/auth_hint_cookie";
 import { Post, User } from "@web-speed-hackathon-2026/server/src/models";
 
 export const userRouter = Router();
 
 userRouter.get("/me", async (req, res) => {
   if (req.session.userId === undefined) {
+    clearAuthHintCookie(res);
     throw new httpErrors.Unauthorized();
   }
   const user = await User.findByPk(req.session.userId);
 
   if (user === null) {
+    clearAuthHintCookie(res);
     throw new httpErrors.NotFound();
   }
 
+  setAuthHintCookie(res);
   return res.status(200).type("application/json").send(user);
 });
 

@@ -8,10 +8,19 @@ import { NewDirectMessageModalContainer } from "@web-speed-hackathon-2026/client
 interface Props {
   activeUser: Models.User | null;
   authModalId: string;
+  authReady: boolean;
 }
 
-export const DirectMessageListContainer = ({ activeUser, authModalId }: Props) => {
+export const DirectMessageListContainer = ({ activeUser, authModalId, authReady }: Props) => {
   const newDmModalId = useId();
+
+  if (!authReady) {
+    return (
+      <div className="p-4">
+        <p className="text-cax-text-muted text-2xl">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (activeUser === null) {
     return (

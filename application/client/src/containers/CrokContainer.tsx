@@ -8,9 +8,10 @@ import { useSSE } from "@web-speed-hackathon-2026/client/src/hooks/use_sse";
 type Props = {
   activeUser: Models.User | null;
   authModalId: string;
+  authReady: boolean;
 };
 
-export const CrokContainer = ({ activeUser, authModalId }: Props) => {
+export const CrokContainer = ({ activeUser, authModalId, authReady }: Props) => {
   const [messages, setMessages] = useState<Models.ChatMessage[]>([]);
 
   const sseOptions = useMemo(
@@ -69,6 +70,14 @@ export const CrokContainer = ({ activeUser, authModalId }: Props) => {
     },
     [isStreaming, start],
   );
+
+  if (!authReady) {
+    return (
+      <div className="p-4">
+        <p className="text-cax-text-muted text-2xl">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (!activeUser) {
     return (

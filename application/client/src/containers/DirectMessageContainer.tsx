@@ -23,9 +23,10 @@ const TYPING_INDICATOR_DURATION_MS = 10 * 1000;
 interface Props {
   activeUser: Models.User | null;
   authModalId: string;
+  authReady: boolean;
 }
 
-export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
+export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: Props) => {
   const { conversationId = "" } = useParams<{ conversationId: string }>();
 
   const [conversation, setConversation] = useState<Models.DirectMessageConversation | null>(null);
@@ -57,12 +58,15 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
   }, [conversationId]);
 
   useEffect(() => {
+    if (!authReady || activeUser == null) {
+      return;
+    }
     void loadConversation();
     const id = requestAnimationFrame(() => {
       void sendRead();
     });
     return () => cancelAnimationFrame(id);
-  }, [loadConversation, sendRead]);
+  }, [authReady, activeUser, loadConversation, sendRead]);
 
   const handleSubmit = useCallback(
     async (params: DirectMessageFormData) => {
@@ -83,7 +87,10 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
     void sendJSON(`/api/v1/dm/${conversationId}/typing`, {});
   }, [conversationId]);
 
-  useWs(`/api/v1/dm/${conversationId}`, (event: DmUpdateEvent | DmTypingEvent) => {
+  const dmWsUrl =
+    authReady && activeUser !== null ? `/api/v1/dm/${conversationId}` : "";
+
+  useWs(dmWsUrl, (event: DmUpdateEvent | DmTypingEvent) => {
     if (event.type === "dm:conversation:message") {
       void loadConversation().then(() => {
         if (event.payload.sender.id !== activeUser?.id) {
@@ -105,6 +112,14 @@ export const DirectMessageContainer = ({ activeUser, authModalId }: Props) => {
       }, TYPING_INDICATOR_DURATION_MS);
     }
   });
+
+  if (!authReady) {
+    return (
+      <div className="p-4">
+        <p className="text-cax-text-muted text-2xl">読み込み中...</p>
+      </div>
+    );
+  }
 
   if (activeUser === null) {
     return (
