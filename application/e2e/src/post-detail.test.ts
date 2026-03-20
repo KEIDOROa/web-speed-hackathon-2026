@@ -8,7 +8,7 @@ test.describe("投稿詳細", () => {
   });
 
   test("投稿が表示される", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     const firstArticle = page.locator("article").first();
     await expect(firstArticle).toBeVisible({ timeout: 30_000 });
     await firstArticle.click();
@@ -26,7 +26,7 @@ test.describe("投稿詳細", () => {
   });
 
   test("タイトルが「{ユーザー名} さんのつぶやき - CaX」", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     const firstArticle = page.locator("article").first();
     await expect(firstArticle).toBeVisible({ timeout: 30_000 });
     await firstArticle.click();
@@ -72,7 +72,7 @@ test.describe("投稿詳細 - 音声", () => {
   });
 
   test("音声の波形が表示され、再生ボタンで切り替えられる", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     const soundArticle = page.locator('article:has(svg[viewBox="0 0 100 1"])').first();
     await expect(soundArticle).toBeVisible({ timeout: 30_000 });
     await soundArticle.locator("time").first().click();
@@ -104,7 +104,7 @@ test.describe("投稿詳細 - 写真", () => {
   });
 
   test("写真がcover拡縮し、画像サイズが著しく荒くない", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
     const imageArticle = page.locator("article:has(.grid img)").first();
     await expect(imageArticle).toBeVisible({ timeout: 30_000 });
     await imageArticle.click();

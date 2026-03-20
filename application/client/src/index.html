@@ -21,7 +21,7 @@
         }).catch(function(e) { clearTimeout(tid); return Promise.reject(e); });
       }
       window.__BOOTSTRAP_ME__ = { status: 'pending' };
-      var meP = fetchWithTimeout('/api/v1/me', 8000);
+      var meP = fetchWithTimeout('/api/v1/me', 30000);
       window.__PREFETCH__['/api/v1/me'] = meP;
       meP.then(function(user) {
         window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
@@ -30,7 +30,7 @@
         window.__BOOTSTRAP_ME__ = { status: 'guest' };
         window.dispatchEvent(new Event('cax-bootstrap-me'));
       });
-      var postsP = fetchWithTimeout('/api/v1/posts?limit=30&offset=0', 8000);
+      var postsP = fetchWithTimeout('/api/v1/posts?limit=30&offset=0', 30000);
       window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = postsP;
       postsP.then(function(posts) {
         if (!posts || !posts.length) return;
