@@ -1,13 +1,14 @@
 # fork 先で自分用 Fly アプリへデプロイする（fly.toml は変更しない）
 #
 # 事前準備:
-# 1. fly auth signup / fly auth login
-# 2. fly apps create <あなたのアプリ名> --org personal  など
-# 3. GitHub リポジトリに設定:
-#    - Secrets: FLY_API_TOKEN（fly tokens create org または fly auth token）
-#    - Variables: FLY_APP_NAME = 手順2のアプリ名
+# 1. fly apps create <名前> --org personal
+# 2. ローカルで: fly tokens create deploy -a <名前>  （ダッシュボードの汎用トークンより確実）
+# 3. GitHub:
+#    - Secret: FLY_API_TOKEN = 上記トークン
+#    - Variable: FLY_APP_NAME = アプリ名（例: swh2026keidoroa）
+#    - Variable（任意）: FLY_ORG = personal（省略時は personal）
 #
-# 公式の PR レビュー用デプロイは deploy-pr.yml（別フロー）
+# fly.toml の app は本家名のまま。デプロイ時のみ fly.deploy.toml を生成して app 行を FLY_APP_NAME に合わせる（レポの fly.toml は変更しない）。
 
 name: Deploy to Fly.io (fork)
 
@@ -24,7 +25,6 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # ジョブの if では secrets を参照できないため vars のみ。トークン未設定時は deploy ステップが失敗する
     if: ${{ vars.FLY_APP_NAME != '' }}
 
     steps:
@@ -36,8 +36,34 @@ jobs:
           curl -L https://fly.io/install.sh | sh
           echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
 
-      - name: Deploy
-        run: fly deploy --remote-only --app "${FLY_APP_NAME}" --config fly.toml --dockerfile Dockerfile
+      - name: Verify token can see app
+        run: |
+          set -euo pipefail
+          APP_NAME=$(printf '%s' "${FLY_APP_NAME}" | tr -d '\r\n' | xargs)
+          export FLY_ORG="${FLY_ORG:-personal}"
+          echo "FLY_ORG=${FLY_ORG}  target_app=${APP_NAME}"
+          fly version
+          fly status -a "$APP_NAME"
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
           FLY_APP_NAME: ${{ vars.FLY_APP_NAME }}
+          FLY_ORG: ${{ vars.FLY_ORG }}
+
+      - name: Deploy
+        run: |
+          set -euo pipefail
+          APP_NAME=$(printf '%s' "${FLY_APP_NAME}" | tr -d '\r\n' | xargs)
+          export FLY_ORG="${FLY_ORG:-personal}"
+          while IFS= read -r line || [ -n "$line" ]; do
+            if [[ "$line" =~ ^app[[:space:]]*=[[:space:]]*\" ]]; then
+              printf '%s\n' "app = \"${APP_NAME}\""
+            else
+              printf '%s\n' "$line"
+            fi
+          done < fly.toml > fly.deploy.toml
+          head -n 12 fly.deploy.toml
+          fly deploy --remote-only --app "$APP_NAME" --config fly.deploy.toml --dockerfile Dockerfile
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP_NAME: ${{ vars.FLY_APP_NAME }}
+          FLY_ORG: ${{ vars.FLY_ORG }}

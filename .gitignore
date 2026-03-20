@@ -220,3 +220,6 @@ $RECYCLE.BIN/
 application/upload/**
 !application/upload/**/
 !application/upload/**/.gitkeep
+
+# CI が fork 用に生成（fly.toml 本体は変更しない）
+fly.deploy.toml
