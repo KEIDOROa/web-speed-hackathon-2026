@@ -37,14 +37,15 @@ postRouter.get("/posts", async (req, res) => {
       },
       {
         association: "images",
-        order: [["createdAt", "ASC"]],
-        separate: true,
         through: { attributes: [] },
       },
       { association: "movie" },
       { association: "sound" },
     ],
-    order: [["id", "DESC"]],
+    order: [
+      ["id", "DESC"],
+      ["images", "createdAt", "ASC"],
+    ],
   });
   const json = JSON.stringify(posts);
 
