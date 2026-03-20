@@ -11,7 +11,9 @@
       "Bash(npx -y wawoff2 --help)",
       "Bash(node:*)",
       "Bash(NODE_PATH=/tmp/node_modules node -e \":*)",
-      "Bash(ls -lhS scripts/react-vendor*.js scripts/vendor*.js scripts/main*.js styles/*.css)"
+      "Bash(ls -lhS scripts/react-vendor*.js scripts/vendor*.js scripts/main*.js styles/*.css)",
+      "Bash(grep -rn \"moment\\\\|lodash\" /c/Github/TechTrain/web-speed-hackathon-2026/application/client/src --include=*.tsx --include=*.ts)",
+      "Bash(grep -rn \"fast-average-color\\\\|image-size\\\\|synchronous\\\\|blocking\" /c/Github/TechTrain/web-speed-hackathon-2026/application/client/src --include=*.tsx --include=*.ts)"
     ]
   }
 }
