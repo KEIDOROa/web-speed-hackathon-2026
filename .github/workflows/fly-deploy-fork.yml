@@ -31,8 +31,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
-      - name: Setup flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@v1
+      - name: Install flyctl
+        run: |
+          curl -L https://fly.io/install.sh | sh
+          echo "$HOME/.fly/bin" >> "$GITHUB_PATH"
 
       - name: Deploy
         run: fly deploy --remote-only --app "${FLY_APP_NAME}" --config fly.toml --dockerfile Dockerfile
