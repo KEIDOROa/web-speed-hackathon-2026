@@ -11,10 +11,11 @@ const cache = new Map<string, { buffer: Buffer; contentType: string }>();
 const POST_IMAGE_MAX_WIDTH = 800;
 const PROFILE_IMAGE_MAX_WIDTH = 128;
 
-const POST_WIDTH_WHITELIST = new Set([360, 480, 640, 800]);
+const POST_WIDTH_WHITELIST = new Set([280, 360, 480, 640, 800]);
 const PROFILE_WIDTH_WHITELIST = new Set([64, 96, 128]);
+const MOVIE_WIDTH_WHITELIST = new Set([280, 360, 480, 640]);
 
-function findImageFile(reqPath: string): string | null {
+function findMediaFile(reqPath: string): string | null {
   const uploadFile = path.join(UPLOAD_PATH, reqPath);
   if (fs.existsSync(uploadFile)) return uploadFile;
 
@@ -30,7 +31,6 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
   try {
     const reqPath = req.path;
 
-    // Only handle .jpg files
     if (!reqPath.endsWith(".jpg")) {
       return next();
     }
@@ -64,8 +64,8 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
       return;
     }
 
-    const filePath = findImageFile(reqPath);
-    if (!filePath) {
+    const filePath = findMediaFile(reqPath);
+    if (filePath == null) {
       return next();
     }
 
@@ -88,6 +88,93 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
     res.setHeader("Vary", "Accept");
     res.send(buffer);
+  } catch {
+    next();
+  }
+});
+
+async function transcodeMovie(
+  filePath: string,
+  maxWidth: number,
+  preferWebp: boolean,
+): Promise<{ buffer: Buffer; contentType: string; cacheVariant: "webp" | "gif" }> {
+  const pipeline = () =>
+    sharp(filePath, { animated: true, limitInputPixels: false }).resize({
+      width: maxWidth,
+      height: maxWidth,
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+
+  if (preferWebp) {
+    try {
+      const buffer = await pipeline().webp({ quality: 78, effort: 5 }).toBuffer();
+      return { buffer, contentType: "image/webp", cacheVariant: "webp" };
+    } catch {
+      // アニメ WebP 化に失敗した場合は GIF にフォールバック
+    }
+  }
+
+  const buffer = await pipeline().gif({ effort: 8 }).toBuffer();
+  return { buffer, contentType: "image/gif", cacheVariant: "gif" };
+}
+
+imageOptimizerRouter.get("/movies/{*path}", async (req, res, next) => {
+  try {
+    const reqPath = req.path;
+
+    if (!reqPath.endsWith(".gif")) {
+      return next();
+    }
+
+    const wQuery = req.query["w"];
+    const wParsed = typeof wQuery === "string" ? Number.parseInt(wQuery, 10) : NaN;
+    let maxWidth = 480;
+    if (Number.isFinite(wParsed) && MOVIE_WIDTH_WHITELIST.has(wParsed)) {
+      maxWidth = wParsed;
+    }
+
+    const acceptHeader = req.headers.accept || "";
+    const preferWebp = acceptHeader.includes("image/webp");
+
+    const filePath = findMediaFile(reqPath);
+    if (filePath == null) {
+      return next();
+    }
+
+    const sendCached = (entry: { buffer: Buffer; contentType: string }) => {
+      res.setHeader("Content-Type", entry.contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("Vary", "Accept");
+      res.send(entry.buffer);
+    };
+
+    if (preferWebp) {
+      const webpKey = `${reqPath}:movie:webp:${maxWidth}`;
+      const webpHit = cache.get(webpKey);
+      if (webpHit) {
+        sendCached(webpHit);
+        return;
+      }
+    }
+
+    const gifKey = `${reqPath}:movie:gif:${maxWidth}`;
+    const gifHit = cache.get(gifKey);
+    if (gifHit) {
+      sendCached(gifHit);
+      return;
+    }
+
+    const { buffer, contentType, cacheVariant } = await transcodeMovie(
+      filePath,
+      maxWidth,
+      preferWebp,
+    );
+
+    const storeKey = `${reqPath}:movie:${cacheVariant}:${maxWidth}`;
+    cache.set(storeKey, { buffer, contentType });
+
+    sendCached({ buffer, contentType });
   } catch {
     next();
   }

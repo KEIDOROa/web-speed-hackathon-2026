@@ -63,7 +63,10 @@ export const PostItem = ({ post, lcpPriority = false }: Props) => {
           ) : null}
           {post.movie ? (
             <div className="relative mt-2 w-full">
-              <MovieArea movie={post.movie} />
+              <MovieArea
+                movie={post.movie}
+                priority={lcpPriority && (post.images?.length ?? 0) === 0}
+              />
             </div>
           ) : null}
           {post.sound ? (

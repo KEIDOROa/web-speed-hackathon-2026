@@ -5,8 +5,10 @@ interface Props {
 }
 
 export const Timeline = ({ timeline }: Props) => {
-  const firstImageIndex = timeline.findIndex((post) => (post.images?.length ?? 0) > 0);
-  const priorityPostIndex = firstImageIndex === -1 ? 0 : firstImageIndex;
+  const firstMediaIndex = timeline.findIndex(
+    (post) => (post.images?.length ?? 0) > 0 || Boolean(post.movie),
+  );
+  const priorityPostIndex = firstMediaIndex === -1 ? 0 : firstMediaIndex;
 
   return (
     <section>

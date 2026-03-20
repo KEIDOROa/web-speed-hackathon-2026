@@ -17,20 +17,35 @@
       window.__PREFETCH__['/api/v1/me'] = fetch('/api/v1/me').then(function(r) { return r.ok ? r.json() : Promise.reject(r); });
       postsP.then(function(posts) {
         if (!posts || !posts.length) return;
-        var postWithImage = null;
+        var mediaPost = null;
+        var mediaKind = null;
         for (var i = 0; i < posts.length; i++) {
-          if (posts[i].images && posts[i].images[0]) {
-            postWithImage = posts[i];
+          var p = posts[i];
+          if (p.images && p.images[0]) {
+            mediaPost = p;
+            mediaKind = 'image';
+            break;
+          }
+          if (p.movie && p.movie.id) {
+            mediaPost = p;
+            mediaKind = 'movie';
             break;
           }
         }
-        if (postWithImage && postWithImage.images[0]) {
+        if (mediaPost && mediaKind === 'image' && mediaPost.images[0]) {
           var link = document.createElement('link');
           link.rel = 'preload';
           link.as = 'image';
-          link.href = '/images/' + postWithImage.images[0].id + '.jpg?w=480';
+          link.href = '/images/' + mediaPost.images[0].id + '.jpg?w=480';
           link.fetchPriority = 'high';
           document.head.appendChild(link);
+        } else if (mediaPost && mediaKind === 'movie' && mediaPost.movie && mediaPost.movie.id) {
+          var linkM = document.createElement('link');
+          linkM.rel = 'preload';
+          linkM.as = 'image';
+          linkM.href = '/movies/' + mediaPost.movie.id + '.gif?w=480';
+          linkM.fetchPriority = 'high';
+          document.head.appendChild(linkM);
         }
         var first = posts[0];
         if (first && first.user && first.user.profileImage) {
