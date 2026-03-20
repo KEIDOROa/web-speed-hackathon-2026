@@ -1,15 +1,5 @@
 const AUTH_HINT_COOKIE = "cax_authed";
 
-export function readAuthHintPresent(): boolean {
-  if (typeof document === "undefined") {
-    return false;
-  }
-  return document.cookie.split(";").some((part) => {
-    const [name, value] = part.trim().split("=");
-    return name === AUTH_HINT_COOKIE && value === "1";
-  });
-}
-
 export function clearAuthHintOnClient(): void {
   if (typeof document === "undefined") {
     return;

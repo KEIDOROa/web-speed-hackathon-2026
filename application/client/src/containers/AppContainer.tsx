@@ -10,7 +10,8 @@ import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/cont
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { SearchContainer } from "@web-speed-hackathon-2026/client/src/containers/SearchContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
-import { clearAuthHintOnClient, readAuthHintPresent } from "@web-speed-hackathon-2026/client/src/utils/auth_hint";
+import { initialAuthFromBootstrap } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
+import { clearAuthHintOnClient } from "@web-speed-hackathon-2026/client/src/utils/auth_hint";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const UserProfileContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer })));
@@ -30,8 +31,10 @@ export const AppContainer = () => {
     window.scrollTo(0, 0);
   }, [pathname]);
 
-  const [activeUser, setActiveUser] = useState<Models.User | null>(null);
-  const [authReady, setAuthReady] = useState(() => !readAuthHintPresent());
+  const [activeUser, setActiveUser] = useState<Models.User | null>(
+    () => initialAuthFromBootstrap().activeUser,
+  );
+  const [authReady, setAuthReady] = useState(() => initialAuthFromBootstrap().authReady);
   useEffect(() => {
     void fetchJSON<Models.User>("/api/v1/me")
       .then((user) => {
