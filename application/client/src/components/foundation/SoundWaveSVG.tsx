@@ -25,15 +25,20 @@ function fallbackHeights(count: number): number[] {
 interface Props {
   audioSrc: string;
   playedRatio?: number;
+  priority?: boolean;
 }
 
-export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
+export const SoundWaveSVG = ({ audioSrc, playedRatio = 0, priority = false }: Props) => {
   const uniqueIdRef = useRef(`sw-${Math.random().toString(16).slice(2)}`);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const [shouldDecode, setShouldDecode] = useState(false);
+  const [shouldDecode, setShouldDecode] = useState(() => priority);
   const [displayPeaks, setDisplayPeaks] = useState<number[]>(() => fallbackHeights(PEAK_BAR_COUNT));
 
   useLayoutEffect(() => {
+    if (priority) {
+      setShouldDecode(true);
+      return;
+    }
     setShouldDecode(false);
     if (typeof IntersectionObserver === "undefined") {
       setShouldDecode(true);
@@ -53,7 +58,7 @@ export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [audioSrc]);
+  }, [audioSrc, priority]);
 
   useEffect(() => {
     if (!shouldDecode) {
@@ -65,7 +70,7 @@ export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
     const run = () => {
       void (async () => {
         try {
-          if (typeof requestIdleCallback !== "undefined") {
+          if (!priority && typeof requestIdleCallback !== "undefined") {
             await new Promise<void>((resolve) => {
               requestIdleCallback(() => resolve(), { timeout: 2000 });
             });
@@ -93,7 +98,7 @@ export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
       cancelled = true;
       ac.abort();
     };
-  }, [audioSrc, shouldDecode]);
+  }, [audioSrc, shouldDecode, priority]);
 
   const minPeak = displayPeaks.length > 0 ? Math.min(...displayPeaks) : 0;
   const maxPeak = displayPeaks.length > 0 ? Math.max(...displayPeaks) : 0;

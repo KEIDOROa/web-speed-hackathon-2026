@@ -6,9 +6,10 @@ import { getSoundPath } from "@web-speed-hackathon-2026/client/src/utils/get_pat
 
 interface Props {
   sound: Models.Sound;
+  priority?: boolean;
 }
 
-export const SoundPlayer = ({ sound }: Props) => {
+export const SoundPlayer = ({ sound, priority = false }: Props) => {
   const soundUrl = getSoundPath(sound.id);
 
   const [currentTimeRatio, setCurrentTimeRatio] = useState(0);
@@ -57,7 +58,7 @@ export const SoundPlayer = ({ sound }: Props) => {
             className="border-cax-border/30 bg-cax-surface relative w-full overflow-hidden rounded border"
             style={{ aspectRatio: "10 / 1", minHeight: "2.75rem" }}
           >
-            <SoundWaveSVG audioSrc={soundUrl} playedRatio={currentTimeRatio} />
+            <SoundWaveSVG audioSrc={soundUrl} playedRatio={currentTimeRatio} priority={priority} />
           </div>
         </div>
       </div>

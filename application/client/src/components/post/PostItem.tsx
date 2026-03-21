@@ -74,7 +74,10 @@ export const PostItem = memo(function PostItem({ post, lcpPriority = false }: Pr
           ) : null}
           {post.sound ? (
             <div className="relative mt-2 w-full">
-              <SoundArea sound={post.sound} />
+              <SoundArea
+                priority={lcpPriority && (post.images?.length ?? 0) === 0 && !post.movie}
+                sound={post.sound}
+              />
             </div>
           ) : null}
           <p className="mt-2 text-sm sm:mt-4">

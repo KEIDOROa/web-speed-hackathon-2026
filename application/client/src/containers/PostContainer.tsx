@@ -45,6 +45,7 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
 
   const firstImageId = post.images?.[0]?.id;
   const movieId = post.movie?.id;
+  const soundId = post.sound?.id;
   const profileId = post.user.profileImage?.id;
 
   return (
@@ -56,6 +57,9 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
         ) : null}
         {!firstImageId && movieId ? (
           <link rel="preload" as="image" href={`/movies/${movieId}.gif?w=360`} fetchPriority="high" />
+        ) : null}
+        {!firstImageId && !movieId && soundId ? (
+          <link rel="preload" as="audio" href={`/sounds/${soundId}.mp3`} />
         ) : null}
         {profileId ? (
           <link
