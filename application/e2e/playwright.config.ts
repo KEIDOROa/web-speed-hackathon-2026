@@ -52,7 +52,7 @@ export default defineConfig({
   expect: {
     timeout: 60_000,
     toHaveScreenshot: {
-      maxDiffPixelRatio: 0.12,
+      maxDiffPixelRatio: 0.03,
     },
   },
   fullyParallel: true,

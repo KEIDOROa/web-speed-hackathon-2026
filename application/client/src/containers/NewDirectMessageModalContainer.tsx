@@ -38,8 +38,8 @@ export const NewDirectMessageModalContainer = ({ id }: Props) => {
       const conversation = await sendJSON<Models.DirectMessageConversation>(`/api/v1/dm`, {
         peerId: user.id,
       });
-      ref.current?.close();
       navigate(`/dm/${conversation.id}`);
+      ref.current?.close();
     } catch {
       throw new SubmissionError({
         _error: "ユーザーが見つかりませんでした",

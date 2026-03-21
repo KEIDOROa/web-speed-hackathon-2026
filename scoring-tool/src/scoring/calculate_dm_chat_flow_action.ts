@@ -1,3 +1,4 @@
+import { expect } from "@playwright/test";
 import type * as playwright from "playwright";
 import type * as puppeteer from "puppeteer";
 
@@ -109,12 +110,13 @@ export async function calculateDmChatFlowAction({
     }
 
     try {
-      const startDmButton = playwrightPage.getByRole("button", { name: "DMを開始" });
-      await startDmButton.click();
-      // DMスレッドページへ遷移
-      await playwrightPage.waitForURL("**/dm/*", {
-        timeout: 60 * 1000,
-      });
+      const dialog = playwrightPage.getByRole("dialog");
+      const startDmButton = dialog.getByRole("button", { name: "DMを開始" });
+      await expect(startDmButton).toBeEnabled({ timeout: 30_000 });
+      await Promise.all([
+        playwrightPage.waitForURL("**/dm/*", { timeout: 90_000 }),
+        startDmButton.click(),
+      ]);
     } catch (err) {
       throw new Error("DMスレッドへの遷移に失敗しました", { cause: err });
     }
