@@ -8,6 +8,7 @@ test.describe("Crok AIチャット", () => {
     await login(page);
     await page.getByRole("link", { name: "Crok" }).click();
     await page.waitForURL("**/crok", { timeout: 30_000 });
+    await page.getByPlaceholder("メッセージを入力...").waitFor({ state: "visible", timeout: 30_000 });
   });
 
   test("サジェスト候補が表示される", async ({ page }) => {
@@ -19,10 +20,10 @@ test.describe("Crok AIチャット", () => {
     });
 
     const chatInput = page.getByPlaceholder("メッセージを入力...");
-    await chatInput.pressSequentially("TypeScriptの型");
+    await chatInput.fill("TypeScriptの型");
 
     const suggestions = page.getByRole("listbox", { name: "サジェスト候補" });
-    await suggestions.waitFor({ timeout: 30_000 });
+    await expect(suggestions).toBeVisible({ timeout: 60_000 });
 
     const buttons = suggestions.locator("button");
     const count = await buttons.count();

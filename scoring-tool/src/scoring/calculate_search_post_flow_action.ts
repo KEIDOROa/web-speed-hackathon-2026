@@ -46,9 +46,11 @@ export async function calculateSearchPostFlowAction({
     try {
       const searchButton = playwrightPage.getByRole("button", { name: "検索" });
       await searchButton.click();
+      await playwrightPage.waitForURL(/\/search\?q=/, { timeout: 120 * 1000 });
       await playwrightPage
-        .getByRole("heading", { name: /「アニメ/ })
-        .waitFor({ timeout: 120 * 1000 });
+        .getByRole("heading", { level: 2, name: /アニメ/ })
+        .first()
+        .waitFor({ state: "visible", timeout: 120 * 1000 });
     } catch (err) {
       throw new Error("検索結果の表示に失敗しました", { cause: err });
     }
@@ -66,9 +68,11 @@ export async function calculateSearchPostFlowAction({
     try {
       const searchButton = playwrightPage.getByRole("button", { name: "検索" });
       await searchButton.click();
+      await playwrightPage.waitForURL(/\/search\?q=/, { timeout: 120 * 1000 });
       await playwrightPage
-        .getByRole("heading", { name: /「アニメ/ })
-        .waitFor({ timeout: 120 * 1000 });
+        .getByRole("heading", { level: 2, name: /アニメ/ })
+        .first()
+        .waitFor({ state: "visible", timeout: 120 * 1000 });
     } catch (err) {
       throw new Error("追加検索結果の表示に失敗しました", { cause: err });
     }

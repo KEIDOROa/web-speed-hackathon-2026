@@ -16,13 +16,19 @@ export async function login(
   password: string = "wsh-2026",
 ): Promise<void> {
   await page.goto("/not-found", { waitUntil: "domcontentloaded" });
+  await page.waitForFunction(() => document.querySelectorAll("dialog").length >= 2, {
+    timeout: 60_000,
+  });
   const signinButton = page.getByRole("button", { name: "サインイン" });
   await expect(signinButton).toBeVisible({ timeout: 30_000 });
   await signinButton.click();
-  await page.getByRole("heading", { name: "サインイン" }).waitFor({ timeout: 30_000 });
-  await page.getByRole("textbox", { name: "ユーザー名" }).pressSequentially(username);
-  await page.getByRole("textbox", { name: "パスワード" }).pressSequentially(password);
-  await page.getByRole("button", { name: "サインイン" }).last().click();
+  const authDialog = page.getByRole("dialog");
+  await authDialog
+    .getByRole("heading", { name: "サインイン" })
+    .waitFor({ state: "visible", timeout: 30_000 });
+  await authDialog.getByRole("textbox", { name: "ユーザー名" }).fill(username);
+  await authDialog.getByRole("textbox", { name: "パスワード" }).fill(password);
+  await authDialog.getByRole("button", { name: "サインイン" }).click();
   await page.getByRole("link", { name: "Crok" }).waitFor({ timeout: 30_000 });
 }
 
