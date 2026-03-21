@@ -18,15 +18,16 @@ directMessageRouter.get("/dm", async (req, res) => {
 
   const userId = req.session.userId;
   const sequelize = DirectMessageConversation.sequelize!;
+  const qi = sequelize.getQueryInterface();
+  const qDm = qi.quoteIdentifier(DirectMessage.tableName);
+  const qConv = qi.quoteIdentifier(DirectMessageConversation.tableName);
+  const qConvFk = qi.quoteIdentifier("conversationId");
+  const qPk = qi.quoteIdentifier("id");
+  const existsMessagesSql = `EXISTS (SELECT 1 FROM ${qDm} AS dm WHERE dm.${qConvFk} = ${qConv}.${qPk})`;
 
   const conversations = await DirectMessageConversation.unscoped().findAll({
     where: {
-      [Op.and]: [
-        { [Op.or]: [{ initiatorId: userId }, { memberId: userId }] },
-        sequelize.literal(
-          `EXISTS (SELECT 1 FROM "DirectMessages" AS dm WHERE dm."conversationId" = "DirectMessageConversation"."id")`,
-        ),
-      ],
+      [Op.and]: [{ [Op.or]: [{ initiatorId: userId }, { memberId: userId }] }, sequelize.literal(existsMessagesSql)],
     },
     include: [
       { association: "initiator", include: [{ association: "profileImage" }] },
