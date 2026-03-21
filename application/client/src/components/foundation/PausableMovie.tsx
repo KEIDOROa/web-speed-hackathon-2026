@@ -12,6 +12,27 @@ interface Props {
   priority?: boolean;
 }
 
+function drawImageFallback(canvas: HTMLCanvasElement, imageUrl: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.naturalWidth || 1;
+      const h = img.naturalHeight || 1;
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (ctx === null) {
+        reject(new Error("no 2d context"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      resolve();
+    };
+    img.onerror = () => reject(new Error("image load failed"));
+    img.src = imageUrl;
+  });
+}
+
 /**
  * アニメ GIF を canvas に描画し、クリックで一時停止・再生を切り替えます。
  * サーバーが Accept: image/webp で WebP を返すため、gif デコード用に Accept: image/gif で取得します。
@@ -19,6 +40,7 @@ interface Props {
 export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _priority }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animatorRef = useRef<GifAnimator | null>(null);
+  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,9 +50,27 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
       return;
     }
 
+    const ensurePlaying = () => {
+      const animator = animatorRef.current;
+      if (animator === null || animator.running()) {
+        return;
+      }
+      animator.start();
+    };
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        ensurePlaying();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
     void (async () => {
       try {
-        const response = await fetch(src, { headers: { Accept: "image/gif" } });
+        const response = await fetch(src, {
+          credentials: "same-origin",
+          headers: { Accept: "image/gif" },
+        });
         const buffer = await response.arrayBuffer();
         if (cancelled) {
           return;
@@ -42,13 +82,43 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
           return;
         }
         animatorRef.current = animator;
+        if (!animator.running()) {
+          animator.start();
+        }
+        intersectionObserverRef.current?.disconnect();
+        const movieRoot = canvas.closest("[data-movie-area]");
+        if (movieRoot !== null) {
+          const io = new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                if (e.isIntersecting) {
+                  ensurePlaying();
+                }
+              }
+            },
+            { root: null, rootMargin: "80px", threshold: 0 },
+          );
+          io.observe(movieRoot);
+          intersectionObserverRef.current = io;
+        }
+        requestAnimationFrame(() => {
+          ensurePlaying();
+        });
       } catch {
-        /* 読み込み失敗時は空の canvas のまま */
+        if (cancelled) return;
+        try {
+          await drawImageFallback(canvas, src);
+        } catch {
+          /* 読み込み失敗時は空の canvas のまま */
+        }
       }
     })();
 
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibility);
+      intersectionObserverRef.current?.disconnect();
+      intersectionObserverRef.current = null;
       animatorRef.current?.stop();
       animatorRef.current = null;
       if (objectUrl !== null) {

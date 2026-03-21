@@ -5,6 +5,7 @@ const fs = require("fs");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 const webpack = require("webpack");
 
 // CSSをHTMLにインライン化するプラグイン
@@ -45,6 +46,7 @@ const config = {
   devServer: {
     historyApiFallback: true,
     host: "0.0.0.0",
+    hot: true,
     port: 8080,
     proxy: [
       {
@@ -95,6 +97,7 @@ const config = {
     clean: true,
   },
   plugins: [
+    ...(!isProduction ? [new ReactRefreshWebpackPlugin()] : []),
     // negaposi-analyzer-jaのpn_ja.dic.jsonがnpmパッケージのfilesに含まれていないため、ローカルコピーを使う
     new webpack.NormalModuleReplacementPlugin(
       /pn_ja\.dic\.json$/,
