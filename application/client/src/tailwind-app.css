@@ -12,8 +12,9 @@
 }
 
 @theme {
-  --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
-  --font-mono: "Noto Sans Mono", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI",
+    "Meiryo", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Consolas", monospace;
   --color-cax-canvas: var(--color-stone-100);
   --color-cax-surface: var(--color-white);
   --color-cax-surface-raised: var(--color-white);

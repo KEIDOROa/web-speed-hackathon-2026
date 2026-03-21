@@ -46,7 +46,7 @@ export function buildMovieResponsive(
 } {
   const base = getMoviePath(movieId);
   const srcSet = MOVIE_SRCSET_WIDTHS.map((w) => `${base}?w=${w} ${w}w`).join(", ");
-  const defaultW = options?.feed ? 280 : 480;
+  const defaultW = options?.feed ? 280 : 360;
   return { src: `${base}?w=${defaultW}`, srcSet, sizes: MOVIE_IMAGE_SIZES };
 }
 

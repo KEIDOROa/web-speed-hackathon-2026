@@ -12,12 +12,14 @@ export async function fetchJSON<T>(url: string): Promise<T> {
     try {
       const data = await prefetched;
       if (url === "/api/v1/me" && data === null) {
-        const guest = new Response(null, { status: 401, statusText: "Unauthorized" });
-        throw guest;
+        /* ブートストラップの /api/v1/me が 401 でも、セッション確定後の再取得を試す */
+      } else {
+        return data as T;
       }
-      return data as T;
     } catch (err) {
       if (err instanceof Response && err.status === 401 && url === "/api/v1/me") {
+        /* 同上 */
+      } else if (err instanceof Response) {
         throw err;
       }
       /* index.html のプリフェッチが先に失敗した場合は通常取得へ */

@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import {
   clickFirstTimelinePostBody,
   dynamicMediaMask,
+  scrollUntilTimelineSelectorVisible,
   waitForPageToLoad,
   waitForVisibleMedia,
 } from "./utils";
@@ -45,7 +46,12 @@ test.describe("投稿詳細 - 動画", () => {
   });
 
   test("動画が自動再生され、クリックで一時停止・再生を切り替えられる", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 30_000 });
+    await scrollUntilTimelineSelectorVisible(
+      page,
+      'article:has(button[aria-label="動画プレイヤー"])',
+    );
     const movieArticle = page.locator('article:has(button[aria-label="動画プレイヤー"])').first();
     await expect(movieArticle).toBeVisible({ timeout: 30_000 });
     await movieArticle.locator("time").first().click();
@@ -76,7 +82,9 @@ test.describe("投稿詳細 - 音声", () => {
 
   test("音声の波形が表示され、再生ボタンで切り替えられる", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const soundArticle = page.locator('article:has(svg[viewBox="0 0 100 1"])').first();
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 30_000 });
+    await scrollUntilTimelineSelectorVisible(page, 'article:has([data-sound-area])');
+    const soundArticle = page.locator('article:has([data-sound-area])').first();
     await expect(soundArticle).toBeVisible({ timeout: 30_000 });
     await soundArticle.locator("time").first().click();
     await page.waitForURL("**/posts/*", { timeout: 30_000 });

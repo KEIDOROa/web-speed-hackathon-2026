@@ -4,10 +4,13 @@ import { buildMovieResponsive } from "@web-speed-hackathon-2026/client/src/utils
 interface Props {
   movie: Models.Movie;
   priority?: boolean;
+  feedVariant?: boolean;
 }
 
-export const MovieArea = ({ movie, priority = false }: Props) => {
-  const { src, srcSet, sizes } = buildMovieResponsive(movie.id, { feed: !priority });
+export const MovieArea = ({ movie, priority = false, feedVariant = true }: Props) => {
+  const { src, srcSet, sizes } = buildMovieResponsive(movie.id, {
+    feed: feedVariant ? true : !priority,
+  });
 
   return (
     <div

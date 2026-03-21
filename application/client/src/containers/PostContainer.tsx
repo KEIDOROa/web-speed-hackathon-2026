@@ -48,7 +48,7 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
           <link rel="preload" as="image" href={`/images/${firstImageId}.jpg?w=640`} fetchPriority="high" />
         ) : null}
         {!firstImageId && movieId ? (
-          <link rel="preload" as="image" href={`/movies/${movieId}.gif?w=480`} fetchPriority="high" />
+          <link rel="preload" as="image" href={`/movies/${movieId}.gif?w=360`} fetchPriority="high" />
         ) : null}
         {profileId ? (
           <link

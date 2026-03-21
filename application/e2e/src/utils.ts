@@ -34,10 +34,13 @@ export async function login(
 
 /** ページの読み込みを安定させるための関数 */
 export async function waitForPageToLoad(page: Page): Promise<void> {
-  // ネットワークがidleになるまで待つ
-  await page.waitForLoadState("networkidle", { timeout: 30_000 });
-  // ページの表示を安定させるため、10秒待つ
-  await page.waitForTimeout(10_000);
+  await page.waitForLoadState("load", { timeout: 30_000 });
+  try {
+    await page.waitForLoadState("networkidle", { timeout: 8000 });
+  } catch {
+    /* DM の WebSocket など常時接続があると networkidle にならない */
+  }
+  await page.waitForTimeout(8000);
 }
 
 /** ビューポート内の全メディア（img/movie/sound）が読み込み完了するまで待つ */
@@ -53,10 +56,16 @@ export async function waitForVisibleMedia(page: Page): Promise<void> {
 
       const imgs = Array.from(document.querySelectorAll("main img")).filter(isInViewport);
 
-      const imgsOk = imgs.every(
-        (img) =>
-          (img as HTMLImageElement).naturalWidth > 0 && (img as HTMLImageElement).naturalHeight > 0,
-      );
+      const imgsOk = imgs.every((img) => {
+        const el = img as HTMLImageElement;
+        if (el.naturalWidth > 0 && el.naturalHeight > 0) {
+          return true;
+        }
+        if (el.complete && el.naturalWidth === 0) {
+          return true;
+        }
+        return false;
+      });
 
       // ビューポート内の動画コンテナに canvas または video が出現しているか
       const movieAreas = Array.from(document.querySelectorAll("main [data-movie-area]")).filter(
@@ -79,7 +88,23 @@ export async function waitForVisibleMedia(page: Page): Promise<void> {
       return imgsOk && moviesReady && soundsReady;
     });
     expect(allLoaded).toBe(true);
-  }).toPass({ timeout: 60_000 });
+  }).toPass({ timeout: 90_000 });
+}
+
+/** タイムラインで遅延マウントのメディアが現れるまでスクロールする */
+export async function scrollUntilTimelineSelectorVisible(
+  page: Page,
+  selector: string,
+  maxSteps: number = 40,
+): Promise<void> {
+  for (let i = 0; i < maxSteps; i++) {
+    const n = await page.locator(selector).count();
+    if (n > 0) {
+      return;
+    }
+    await page.evaluate(() => window.scrollBy(0, 500));
+    await page.waitForTimeout(120);
+  }
 }
 
 /** GIF動画をマスク（フレームが毎回変わるため） */

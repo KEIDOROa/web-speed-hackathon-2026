@@ -88,8 +88,9 @@ export const AppContainer = () => {
   }, []);
 
   useEffect(() => {
-    const bootstrap = (window as unknown as { __BOOTSTRAP_ME__?: { status: string } }).__BOOTSTRAP_ME__;
-    if (bootstrap?.status === "ok" || bootstrap?.status === "guest") {
+    const raw = (window as unknown as { __BOOTSTRAP_ME__?: { status: string; user?: Models.User } })
+      .__BOOTSTRAP_ME__;
+    if (raw?.status === "ok" && raw.user != null) {
       return;
     }
     const snapshot = bootstrapMeGenerationRef.current;

@@ -9,9 +9,11 @@ const IMAGE_SIZES_GRID = "(max-width: 640px) min(44vw - 0.75rem, 280px), 280px";
 interface Props {
   images: Models.Image[];
   priority?: boolean;
+  /** タイムライン等は true。投稿詳細は false で大きい解像度を使う */
+  feedVariant?: boolean;
 }
 
-export const ImageArea = ({ images, priority = false }: Props) => {
+export const ImageArea = ({ images, priority = false, feedVariant = true }: Props) => {
   return (
     <AspectRatioBox aspectHeight={9} aspectWidth={16}>
       <div className="border-cax-border grid h-full w-full grid-cols-2 grid-rows-2 gap-1 overflow-hidden rounded-lg border">
@@ -28,7 +30,7 @@ export const ImageArea = ({ images, priority = false }: Props) => {
               })}
             >
               <CoveredImage
-                feedOptimize={!priority}
+                feedOptimize={feedVariant ? true : !priority}
                 imageId={image.id}
                 priority={priority}
                 sizes={images.length === 1 ? IMAGE_SIZES_FULL : IMAGE_SIZES_GRID}

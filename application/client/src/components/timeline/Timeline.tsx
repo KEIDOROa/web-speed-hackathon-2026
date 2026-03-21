@@ -5,10 +5,13 @@ interface Props {
 }
 
 export const Timeline = ({ timeline }: Props) => {
-  const firstMediaIndex = timeline.findIndex(
-    (post) => (post.images?.length ?? 0) > 0 || Boolean(post.movie),
-  );
-  const priorityPostIndex = firstMediaIndex === -1 ? 0 : firstMediaIndex;
+  const mediaIndices = timeline
+    .map((_, i) => i)
+    .filter((i) => {
+      const post = timeline[i];
+      return (post.images?.length ?? 0) > 0 || Boolean(post.movie);
+    });
+  const priorityMediaIndices = new Set(mediaIndices.slice(0, 2));
 
   return (
     <section>
@@ -19,7 +22,7 @@ export const Timeline = ({ timeline }: Props) => {
             contentVisibilityAuto={index > 1}
             post={post}
             priorityAvatar={index === 0}
-            priorityMedia={index === priorityPostIndex}
+            priorityMedia={priorityMediaIndices.has(index)}
           />
         );
       })}

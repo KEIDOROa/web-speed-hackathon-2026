@@ -72,9 +72,9 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
 
     const compact = maxWidth <= 480;
     if (format === "webp") {
-      pipeline = pipeline.webp({ quality: compact ? 68 : 74 });
+      pipeline = pipeline.webp({ quality: compact ? 64 : 74 });
     } else {
-      pipeline = pipeline.jpeg({ quality: compact ? 68 : 74, mozjpeg: true });
+      pipeline = pipeline.jpeg({ quality: compact ? 64 : 74, mozjpeg: true });
     }
 
     const buffer = await pipeline.toBuffer();

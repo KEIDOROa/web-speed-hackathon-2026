@@ -60,12 +60,13 @@ export const PostItem = memo(function PostItem({ post, lcpPriority = false }: Pr
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} priority={lcpPriority} />
+              <ImageArea feedVariant={false} images={post.images} priority={lcpPriority} />
             </div>
           ) : null}
           {post.movie ? (
             <div className="relative mt-2 w-full">
               <MovieArea
+                feedVariant={false}
                 movie={post.movie}
                 priority={lcpPriority && (post.images?.length ?? 0) === 0}
               />

@@ -9,7 +9,8 @@ test.describe("DM一覧", () => {
 
   test("DM一覧が表示される", async ({ page }) => {
     await login(page);
-    await page.goto("/dm");
+    await page.goto("/dm", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load", { timeout: 30_000 });
 
     await expect(page.getByRole("heading", { name: "ダイレクトメッセージ" })).toBeVisible({
       timeout: 30_000,

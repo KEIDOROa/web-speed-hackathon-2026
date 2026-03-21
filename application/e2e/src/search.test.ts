@@ -94,14 +94,13 @@ test.describe("検索ページ", () => {
   test("検索結果が表示される", async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto("/search?q=写真", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("load", { timeout: 30_000 });
 
-    await expect(page.locator("main article").first()).toBeVisible({ timeout: 30_000 });
-
-    // 検索条件と件数を含む見出しが表示される
     const heading = page.locator("main h2");
-    await expect(heading).toContainText("「写真」");
+    await expect(heading).toContainText("「写真」", { timeout: 30_000 });
     await expect(heading).toContainText("の検索結果");
     await expect(heading).toContainText("件)");
+    await expect(page.locator("main article").first()).toBeVisible({ timeout: 30_000 });
 
     // VRT: 検索結果
     await waitForVisibleMedia(page);
