@@ -19,7 +19,11 @@ export const CommentItem = ({ comment }: Props) => {
           >
             <img
               alt={comment.user.profileImage.alt || `${comment.user.name}のプロフィール画像`}
+              decoding="async"
+              height={48}
+              loading="lazy"
               src={getProfileImagePath(comment.user.profileImage.id, 96)}
+              width={48}
             />
           </Link>
         </div>
