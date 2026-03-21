@@ -39,12 +39,14 @@ export const DirectMessagePage = memo(function DirectMessagePage({
   const formRef = useRef<HTMLFormElement>(null);
   const lastMessageRef = useRef<HTMLLIElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const prevSubmittingRef = useRef(isSubmitting);
   const textAreaId = useId();
 
   useEffect(() => {
-    if (!isSubmitting) {
+    if (prevSubmittingRef.current && !isSubmitting) {
       textareaRef.current?.focus({ preventScroll: true });
     }
+    prevSubmittingRef.current = isSubmitting;
   }, [isSubmitting]);
 
   const peer =
