@@ -62,10 +62,7 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
       return;
     }
     void loadConversation();
-    const id = requestAnimationFrame(() => {
-      void sendRead();
-    });
-    return () => cancelAnimationFrame(id);
+    void sendRead();
   }, [authReady, activeUser, loadConversation, sendRead]);
 
   const handleSubmit = useCallback(

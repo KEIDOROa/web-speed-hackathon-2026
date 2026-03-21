@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
-import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
 import { useWs } from "@web-speed-hackathon-2026/client/src/hooks/use_ws";
 import { fromNow } from "@web-speed-hackathon-2026/client/src/utils/date";
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
@@ -103,7 +103,6 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
                 <Link
                   aria-label={`@${peer.username}`}
                   className="hover:bg-cax-surface-subtle px-4"
-                  reloadDocument
                   to={`/dm/${conversation.id}`}
                 >
                   <div className="border-cax-border flex gap-4 border-b px-4 pt-2 pb-4">
