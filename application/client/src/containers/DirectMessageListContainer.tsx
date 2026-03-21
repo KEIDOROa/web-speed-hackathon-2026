@@ -17,7 +17,11 @@ export const DirectMessageListContainer = ({ activeUser, authModalId, authReady 
   if (!authReady) {
     return (
       <div className="p-4">
-        <p className="text-cax-text-muted text-2xl">読み込み中...</p>
+        <Helmet>
+          <title>ダイレクトメッセージ - CaX</title>
+        </Helmet>
+        <h1 className="text-2xl font-bold">ダイレクトメッセージ</h1>
+        <p className="text-cax-text-muted mt-2 text-2xl">読み込み中...</p>
       </div>
     );
   }
