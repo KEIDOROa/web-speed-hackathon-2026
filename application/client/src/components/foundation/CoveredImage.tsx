@@ -6,6 +6,7 @@ import { buildPostImageResponsive } from "@web-speed-hackathon-2026/client/src/u
 
 interface Props {
   imageId: string;
+  alt: string;
   priority?: boolean;
   /** タイムライン等。解像度を抑えて LCP/TBT に効かせる */
   feedOptimize?: boolean;
@@ -15,7 +16,13 @@ interface Props {
 /**
  * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します
  */
-export const CoveredImage = ({ imageId, priority = false, feedOptimize = false, sizes }: Props) => {
+export const CoveredImage = ({
+  imageId,
+  alt,
+  priority = false,
+  feedOptimize = false,
+  sizes,
+}: Props) => {
   const dialogId = useId();
   const { src, srcSet } = useMemo(
     () => buildPostImageResponsive(imageId, { feed: feedOptimize }),
@@ -29,9 +36,9 @@ export const CoveredImage = ({ imageId, priority = false, feedOptimize = false, 
   return (
     <div className="relative h-full w-full overflow-hidden">
       <img
-        alt=""
+        alt={alt}
         className="absolute left-1/2 top-1/2 h-full w-full max-w-none -translate-x-1/2 -translate-y-1/2 object-cover"
-        decoding="async"
+        decoding={priority ? "sync" : "async"}
         fetchPriority={priority ? "high" : "auto"}
         loading={priority ? "eager" : "lazy"}
         sizes={sizes}
@@ -52,7 +59,7 @@ export const CoveredImage = ({ imageId, priority = false, feedOptimize = false, 
         <div className="grid gap-y-6">
           <h1 className="text-center text-2xl font-bold">画像の説明</h1>
 
-          <p className="text-sm"></p>
+          <p className="text-sm">{alt || "（説明はありません）"}</p>
 
           <Button variant="secondary" command="close" commandfor={dialogId}>
             閉じる

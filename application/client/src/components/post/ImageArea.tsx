@@ -30,6 +30,7 @@ export const ImageArea = ({ images, priority = false, feedVariant = true }: Prop
               })}
             >
               <CoveredImage
+                alt={image.alt}
                 feedOptimize={feedVariant ? true : !priority}
                 imageId={image.id}
                 priority={priority}

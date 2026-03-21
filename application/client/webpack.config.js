@@ -114,7 +114,12 @@ const config = {
     ],
   },
   output: {
-    chunkFilename: "scripts/chunk-[contenthash].js",
+    chunkFilename: (pathData) => {
+      const name = pathData.chunk?.name;
+      return name
+        ? `scripts/${name}-[contenthash].js`
+        : `scripts/chunk-[contenthash].js`;
+    },
     filename: "scripts/[name]-[contenthash].js",
     path: DIST_PATH,
     publicPath: "/",

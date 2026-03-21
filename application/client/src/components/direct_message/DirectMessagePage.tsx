@@ -36,6 +36,7 @@ export const DirectMessagePage = memo(function DirectMessagePage({
   onSubmit,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
+  const lastMessageRef = useRef<HTMLLIElement | null>(null);
   const textAreaId = useId();
 
   const peer =
@@ -79,7 +80,7 @@ export const DirectMessagePage = memo(function DirectMessagePage({
 
   useLayoutEffect(() => {
     const id = requestAnimationFrame(() => {
-      window.scrollTo(0, document.body.offsetHeight);
+      lastMessageRef.current?.scrollIntoView({ block: "end", behavior: "auto" });
     });
     return () => cancelAnimationFrame(id);
   }, [scrollKey]);
@@ -122,11 +123,13 @@ export const DirectMessagePage = memo(function DirectMessagePage({
         )}
 
         <ul className="grid gap-3" data-testid="dm-message-list">
-          {conversation.messages.map((message) => {
+          {conversation.messages.map((message, index) => {
             const isActiveUserSend = message.sender.id === activeUser.id;
+            const isLast = index === conversation.messages.length - 1;
 
             return (
               <li
+                ref={isLast ? lastMessageRef : undefined}
                 key={message.id}
                 className={classNames(
                   "flex flex-col w-full",

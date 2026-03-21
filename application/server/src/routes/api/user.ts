@@ -19,6 +19,7 @@ userRouter.get("/me", async (req, res) => {
   }
 
   setAuthHintCookie(res);
+  res.setHeader("Cache-Control", "private, no-store");
   return res.status(200).type("application/json").send(user);
 });
 

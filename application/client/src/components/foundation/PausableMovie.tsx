@@ -8,6 +8,8 @@ interface Props {
   srcSet?: string;
   sizes?: string;
   priority?: boolean;
+  /** GIF 本体とは別 URL（1フレ目静止画）。指定時は LCP を軽量画像に寄せる */
+  posterSrc?: string;
 }
 
 interface DecodedFrame {
@@ -31,7 +33,13 @@ function waitForIdle(): Promise<void> {
   });
 }
 
-export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority = false }: Props) => {
+export const PausableMovie = ({
+  src,
+  srcSet: _srcSet,
+  sizes: _sizes,
+  priority = false,
+  posterSrc,
+}: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animStateRef = useRef<{
     frames: DecodedFrame[];
@@ -43,8 +51,26 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority = 
   } | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [decodeGate, setDecodeGate] = useState(!priority);
 
   useEffect(() => {
+    setDecodeGate(!priority);
+  }, [src, priority]);
+
+  useEffect(() => {
+    if (!priority) {
+      return;
+    }
+    const t = window.setTimeout(() => {
+      setDecodeGate(true);
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [src, priority]);
+
+  useEffect(() => {
+    if (!decodeGate) {
+      return;
+    }
     let cancelled = false;
 
     const renderFrame = () => {
@@ -165,7 +191,7 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority = 
       }
       animStateRef.current = null;
     };
-  }, [src, priority]);
+  }, [src, priority, decodeGate]);
 
   const handleToggle = useCallback(() => {
     const state = animStateRef.current;
@@ -210,7 +236,26 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority = 
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
       <div className="group relative block h-full w-full">
-        <canvas ref={canvasRef} className="block h-full w-full object-cover" />
+        {!isLoaded ? (
+          <img
+            alt=""
+            className="absolute inset-0 z-0 h-full w-full object-cover"
+            decoding={priority ? "sync" : "async"}
+            fetchPriority={priority ? "high" : "auto"}
+            loading={priority ? "eager" : "lazy"}
+            src={posterSrc ?? src}
+            onError={() => setDecodeGate(true)}
+            onLoad={() => {
+              if (priority) {
+                setDecodeGate(true);
+              }
+            }}
+          />
+        ) : null}
+        <canvas
+          ref={canvasRef}
+          className={`absolute inset-0 z-[1] block h-full w-full object-cover ${isLoaded ? "opacity-100" : "opacity-0"}`}
+        />
         <button
           aria-label="動画プレイヤー"
           aria-pressed={isPlaying}

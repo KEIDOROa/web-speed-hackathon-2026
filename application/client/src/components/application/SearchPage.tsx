@@ -58,20 +58,33 @@ const SearchPageComponent = ({
     }
 
     let isMounted = true;
-    analyzeSentiment(parsed.keywords)
-      .then((result) => {
-        if (isMounted) {
-          setIsNegative(result.label === "negative");
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setIsNegative(false);
-        }
-      });
+    const run = () => {
+      if (!isMounted) return;
+      void analyzeSentiment(parsed.keywords)
+        .then((result) => {
+          if (isMounted) {
+            setIsNegative(result.label === "negative");
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setIsNegative(false);
+          }
+        });
+    };
+
+    let cancelScheduled: () => void;
+    if (typeof requestIdleCallback !== "undefined") {
+      const idleId = requestIdleCallback(() => run(), { timeout: 4000 });
+      cancelScheduled = () => cancelIdleCallback(idleId);
+    } else {
+      const tid = window.setTimeout(() => run(), 1);
+      cancelScheduled = () => window.clearTimeout(tid);
+    }
 
     return () => {
       isMounted = false;
+      cancelScheduled();
     };
   }, [parsed.keywords]);
 
@@ -135,8 +148,20 @@ const SearchPageComponent = ({
 
       {query ? (
         resultsLoading && results.length === 0 ? (
-          <div className="text-cax-text-muted flex items-center justify-center p-8">
-            検索結果を読み込み中...
+          <div className="px-1 sm:px-4" aria-busy="true" aria-label="検索結果を読み込み中">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="border-cax-border flex animate-pulse border-b px-2 pt-2 pb-4 sm:px-4"
+              >
+                <div className="bg-cax-surface-subtle mr-2 size-12 shrink-0 rounded-full sm:mr-4 sm:size-16" />
+                <div className="min-w-0 flex-1 space-y-3 pt-1">
+                  <div className="bg-cax-surface-subtle h-3 w-40 rounded" />
+                  <div className="bg-cax-surface-subtle h-3 w-full max-w-md rounded" />
+                  <div className="bg-cax-surface-subtle mt-4 h-40 w-full max-w-md rounded-lg" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : resultsError != null && results.length === 0 ? (
           <div className="text-cax-danger flex items-center justify-center p-8">

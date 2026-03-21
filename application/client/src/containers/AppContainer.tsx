@@ -3,6 +3,7 @@ import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
+import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { initialAuthFromBootstrap, setCachedUser, clearCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
 import { clearAuthHintOnClient } from "@web-speed-hackathon-2026/client/src/utils/auth_hint";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
@@ -13,33 +14,42 @@ const CrokContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then(m => ({ default: m.CrokContainer })),
 );
 const DirectMessageContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then(m => ({
+  import(
+    /* webpackChunkName: "route-dm-detail" */
+    /* webpackPrefetch: true */
+    "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer"
+  ).then(m => ({
     default: m.DirectMessageContainer,
   })),
 );
 const DirectMessageListContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then(m => ({
+  import(
+    /* webpackChunkName: "route-dm-list" */
+    /* webpackPrefetch: true */
+    "@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer"
+  ).then(m => ({
     default: m.DirectMessageListContainer,
   })),
 );
 const PostContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/PostContainer").then(m => ({ default: m.PostContainer })),
+  import(
+    /* webpackChunkName: "route-post" */
+    /* webpackPrefetch: true */
+    "@web-speed-hackathon-2026/client/src/containers/PostContainer"
+  ).then(m => ({ default: m.PostContainer })),
 );
 const SearchContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/SearchContainer").then(m => ({ default: m.SearchContainer })),
+  import(
+    /* webpackChunkName: "route-search" */
+    /* webpackPrefetch: true */
+    "@web-speed-hackathon-2026/client/src/containers/SearchContainer"
+  ).then(m => ({ default: m.SearchContainer })),
 );
 const UserProfileContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer })),
 );
 const TermContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/TermContainer").then(m => ({ default: m.TermContainer })),
-);
-const TimelineContainer = lazy(() =>
-  import(
-    /* webpackChunkName: "timeline" */
-    /* webpackPreload: true */
-    "@web-speed-hackathon-2026/client/src/containers/TimelineContainer"
-  ).then((m) => ({ default: m.TimelineContainer })),
 );
 const AuthModalContainer = lazy(() =>
   import(

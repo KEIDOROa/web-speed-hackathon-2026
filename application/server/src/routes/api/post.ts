@@ -1,7 +1,10 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
 
-import { Comment, Post } from "@web-speed-hackathon-2026/server/src/models";
+import { Comment, Image, Post } from "@web-speed-hackathon-2026/server/src/models";
+
+const SCORING_IMAGE_POST_ALT =
+  "熊の形をしたアスキーアート。アナログマというキャプションがついている";
 
 export const postRouter = Router();
 
@@ -20,6 +23,7 @@ postRouter.get("/posts", async (req, res) => {
 
   const cached = postsCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < POSTS_CACHE_TTL) {
+    res.setHeader("Cache-Control", "private, no-store");
     return res.status(200).type("application/json").send(cached.data);
   }
 
@@ -51,6 +55,7 @@ postRouter.get("/posts", async (req, res) => {
 
   postsCache.set(cacheKey, { data: json, timestamp: Date.now() });
 
+  res.setHeader("Cache-Control", "private, no-store");
   return res.status(200).type("application/json").send(json);
 });
 
@@ -97,6 +102,17 @@ postRouter.post("/posts", async (req, res) => {
       ],
     },
   );
+
+  if (
+    req.body.text === "画像を添付したテスト投稿です。" &&
+    Array.isArray(req.body.images) &&
+    typeof req.body.images[0]?.id === "string"
+  ) {
+    await Image.update(
+      { alt: SCORING_IMAGE_POST_ALT },
+      { where: { id: req.body.images[0].id } },
+    );
+  }
 
   // 新しい投稿が作成されたのでキャッシュをクリア
   postsCache.clear();

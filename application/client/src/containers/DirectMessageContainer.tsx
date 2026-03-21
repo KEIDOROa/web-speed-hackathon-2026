@@ -2,6 +2,7 @@ import { startTransition, useCallback, useEffect, useRef, useState } from "react
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 
+import { DirectMessageDetailSkeleton } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageDetailSkeleton";
 import { DirectMessageGate } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageGate";
 import { DirectMessagePage } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessagePage";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
@@ -146,11 +147,7 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
   });
 
   if (!authReady) {
-    return (
-      <div className="p-4">
-        <p className="text-cax-text-muted text-2xl">読み込み中...</p>
-      </div>
-    );
+    return <DirectMessageDetailSkeleton />;
   }
 
   if (activeUser === null) {
@@ -166,11 +163,7 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
     if (conversationError != null) {
       return <NotFoundContainer />;
     }
-    return (
-      <div className="p-4">
-        <p className="text-cax-text-muted text-2xl">メッセージを読み込み中...</p>
-      </div>
-    );
+    return <DirectMessageDetailSkeleton />;
   }
 
   const peer =

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { decodePeaksFromUrl } from "@web-speed-hackathon-2026/client/src/utils/audio_waveform_peaks";
 
@@ -29,33 +29,71 @@ interface Props {
 
 export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
   const uniqueIdRef = useRef(`sw-${Math.random().toString(16).slice(2)}`);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const [shouldDecode, setShouldDecode] = useState(false);
   const [displayPeaks, setDisplayPeaks] = useState<number[]>(() => fallbackHeights(PEAK_BAR_COUNT));
 
+  useLayoutEffect(() => {
+    setShouldDecode(false);
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldDecode(true);
+      return;
+    }
+    const el = svgRef.current;
+    if (!el) {
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setShouldDecode(true);
+        }
+      },
+      { rootMargin: "160px", threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [audioSrc]);
+
   useEffect(() => {
+    if (!shouldDecode) {
+      return;
+    }
     const ac = new AbortController();
     let cancelled = false;
 
-    (async () => {
-      try {
-        const peaks = await decodePeaksFromUrl(audioSrc, PEAK_BAR_COUNT, ac.signal);
-        if (!cancelled) {
-          setDisplayPeaks(peaks);
+    const run = () => {
+      void (async () => {
+        try {
+          if (typeof requestIdleCallback !== "undefined") {
+            await new Promise<void>((resolve) => {
+              requestIdleCallback(() => resolve(), { timeout: 2000 });
+            });
+          }
+          if (cancelled || ac.signal.aborted) {
+            return;
+          }
+          const peaks = await decodePeaksFromUrl(audioSrc, PEAK_BAR_COUNT, ac.signal);
+          if (!cancelled) {
+            setDisplayPeaks(peaks);
+          }
+        } catch (e) {
+          if ((e as Error).name === "AbortError") {
+            return;
+          }
+          if (!cancelled) {
+            setDisplayPeaks(fallbackHeights(PEAK_BAR_COUNT));
+          }
         }
-      } catch (e) {
-        if ((e as Error).name === "AbortError") {
-          return;
-        }
-        if (!cancelled) {
-          setDisplayPeaks(fallbackHeights(PEAK_BAR_COUNT));
-        }
-      }
-    })();
+      })();
+    };
+    run();
 
     return () => {
       cancelled = true;
       ac.abort();
     };
-  }, [audioSrc]);
+  }, [audioSrc, shouldDecode]);
 
   const minPeak = displayPeaks.length > 0 ? Math.min(...displayPeaks) : 0;
   const maxPeak = displayPeaks.length > 0 ? Math.max(...displayPeaks) : 0;
@@ -100,6 +138,7 @@ export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
 
   return (
     <svg
+      ref={svgRef}
       className="text-cax-accent absolute inset-0 block h-full w-full"
       preserveAspectRatio="none"
       viewBox={`0 0 ${PEAK_BAR_COUNT} 1`}

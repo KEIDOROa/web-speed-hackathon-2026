@@ -43,11 +43,13 @@ export function buildMovieResponsive(
   src: string;
   srcSet: string;
   sizes: string;
+  posterSrc: string;
 } {
   const base = getMoviePath(movieId);
   const srcSet = MOVIE_SRCSET_WIDTHS.map((w) => `${base}?w=${w} ${w}w`).join(", ");
   const defaultW = options?.feed ? 280 : 360;
-  return { src: `${base}?w=${defaultW}`, srcSet, sizes: MOVIE_IMAGE_SIZES };
+  const posterSrc = `/movies/${movieId}/poster?w=${defaultW}`;
+  return { src: `${base}?w=${defaultW}`, srcSet, sizes: MOVIE_IMAGE_SIZES, posterSrc };
 }
 
 export function getSoundPath(soundId: string): string {

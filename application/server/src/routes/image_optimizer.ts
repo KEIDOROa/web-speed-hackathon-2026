@@ -90,6 +90,66 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
   }
 });
 
+imageOptimizerRouter.get("/movies/:movieId/poster", async (req, res, next) => {
+  try {
+    const movieId = req.params.movieId;
+    if (typeof movieId !== "string" || movieId.length === 0) {
+      return next();
+    }
+
+    const wQuery = req.query["w"];
+    const wParsed = typeof wQuery === "string" ? Number.parseInt(wQuery, 10) : NaN;
+    let maxWidth = 480;
+    if (Number.isFinite(wParsed) && MOVIE_WIDTH_WHITELIST.has(wParsed)) {
+      maxWidth = wParsed;
+    }
+
+    const acceptHeader = req.headers.accept || "";
+    const supportsWebp = acceptHeader.includes("image/webp");
+    const format = supportsWebp ? "webp" : "jpeg";
+    const contentType = supportsWebp ? "image/webp" : "image/jpeg";
+
+    const relPath = `movies/${movieId}.gif`;
+    const cacheKey = `${relPath}:poster:${maxWidth}:${format}`;
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      res.setHeader("Content-Type", cached.contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("Vary", "Accept");
+      res.send(cached.buffer);
+      return;
+    }
+
+    const filePath = findMediaFile(relPath);
+    if (filePath == null) {
+      return next();
+    }
+
+    const compact = maxWidth <= 360;
+    const pipeline = sharp(filePath, { animated: false, limitInputPixels: false }).resize({
+      width: maxWidth,
+      height: maxWidth,
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+
+    let buffer: Buffer;
+    if (supportsWebp) {
+      buffer = await pipeline.webp({ quality: compact ? 70 : 78, effort: 4 }).toBuffer();
+    } else {
+      buffer = await pipeline.jpeg({ quality: compact ? 70 : 78, mozjpeg: true }).toBuffer();
+    }
+
+    cache.set(cacheKey, { buffer, contentType });
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Vary", "Accept");
+    res.send(buffer);
+  } catch {
+    next();
+  }
+});
+
 async function transcodeMovie(
   filePath: string,
   maxWidth: number,
