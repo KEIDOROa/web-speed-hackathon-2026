@@ -12,6 +12,23 @@ type Params = {
   playwrightPage: playwright.Page;
   puppeteerPage: puppeteer.Page;
 };
+
+/** 認証モーダルが「サインイン」タブになるまで待つ（新規登録のまま残っている場合は切替） */
+async function waitForSigninAuthDialog(page: playwright.Page): Promise<void> {
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor({ state: "visible", timeout: 10 * 1000 });
+  const signinHeading = dialog.getByRole("heading", { name: "サインイン" });
+  const signupHeading = dialog.getByRole("heading", { name: "新規登録" });
+  await Promise.race([
+    signinHeading.waitFor({ state: "visible", timeout: 10 * 1000 }),
+    signupHeading.waitFor({ state: "visible", timeout: 10 * 1000 }),
+  ]);
+  if (await signupHeading.isVisible()) {
+    await dialog.getByRole("button", { name: "サインインはこちら" }).click();
+  }
+  await signinHeading.waitFor({ state: "visible", timeout: 10 * 1000 });
+}
+
 export async function calculateUserAuthFlowAction({
   baseUrl,
   playwrightPage,
@@ -60,19 +77,19 @@ export async function calculateUserAuthFlowAction({
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByRole("textbox", { name: "ユーザー名" });
-      await input.pressSequentially("superultrahypermiracleromantic", { delay: 10 });
+      await input.fill("superultrahypermiracleromantic");
     } catch (err) {
       throw new Error("ユーザー名の入力に失敗しました", { cause: err });
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByRole("textbox", { name: "名前" });
-      await input.pressSequentially("superultrahypermiracleromantic", { delay: 10 });
+      await input.fill("superultrahypermiracleromantic");
     } catch (err) {
       throw new Error("名前の入力に失敗しました", { cause: err });
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByRole("textbox", { name: "パスワード" });
-      await input.pressSequentially("superultra_hyper_miracle_romantic", { delay: 10 });
+      await input.fill("superultra_hyper_miracle_romantic");
     } catch (err) {
       throw new Error("パスワードの入力に失敗しました", { cause: err });
     }
@@ -111,18 +128,19 @@ export async function calculateUserAuthFlowAction({
     try {
       const button = playwrightPage.getByRole("button", { name: "サインイン" });
       await button.click();
+      await waitForSigninAuthDialog(playwrightPage);
     } catch (err) {
       throw new Error("サインインモーダルの表示に失敗しました", { cause: err });
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByRole("textbox", { name: "ユーザー名" });
-      await input.pressSequentially("superultrahypermiracleromantic", { delay: 10 });
+      await input.fill("superultrahypermiracleromantic");
     } catch (err) {
       throw new Error("ユーザー名の入力に失敗しました", { cause: err });
     }
     try {
       const input = playwrightPage.getByRole("dialog").getByRole("textbox", { name: "パスワード" });
-      await input.pressSequentially("superultra_hyper_miracle_romantic", { delay: 10 });
+      await input.fill("superultra_hyper_miracle_romantic");
     } catch (err) {
       throw new Error("パスワードの入力に失敗しました", { cause: err });
     }
