@@ -1,7 +1,5 @@
 export const POST_IMAGE_SRCSET_WIDTHS = [280, 360, 480, 640, 800] as const;
 
-export const MOVIE_SRCSET_WIDTHS = [280, 360, 480] as const;
-
 export const MOVIE_IMAGE_SIZES = "(max-width: 640px) min(100vw - 5rem, 480px), 480px";
 
 export function getImagePath(imageId: string): string {
@@ -33,7 +31,7 @@ export function getProfileImagePath(
 }
 
 export function getMoviePath(movieId: string): string {
-  return `/movies/${movieId}.gif`;
+  return `/movies/${movieId}.mp4`;
 }
 
 export function buildMovieResponsive(
@@ -46,10 +44,9 @@ export function buildMovieResponsive(
   posterSrc: string;
 } {
   const base = getMoviePath(movieId);
-  const srcSet = MOVIE_SRCSET_WIDTHS.map((w) => `${base}?w=${w} ${w}w`).join(", ");
   const defaultW = options?.feed ? 280 : 360;
   const posterSrc = `/movies/${movieId}/poster?w=${defaultW}`;
-  return { src: `${base}?w=${defaultW}`, srcSet, sizes: MOVIE_IMAGE_SIZES, posterSrc };
+  return { src: base, srcSet: "", sizes: MOVIE_IMAGE_SIZES, posterSrc };
 }
 
 export function getSoundPath(soundId: string): string {

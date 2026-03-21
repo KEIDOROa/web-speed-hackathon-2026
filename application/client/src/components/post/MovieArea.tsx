@@ -8,7 +8,7 @@ interface Props {
 }
 
 export const MovieArea = ({ movie, priority = false, feedVariant = true }: Props) => {
-  const { src, srcSet, sizes, posterSrc } = buildMovieResponsive(movie.id, {
+  const { src, posterSrc } = buildMovieResponsive(movie.id, {
     feed: feedVariant ? true : !priority,
   });
 
@@ -17,7 +17,7 @@ export const MovieArea = ({ movie, priority = false, feedVariant = true }: Props
       className="border-cax-border bg-cax-surface-subtle relative h-full w-full overflow-hidden rounded-lg border"
       data-movie-area
     >
-      <PausableMovie posterSrc={posterSrc} priority={priority} sizes={sizes} src={src} srcSet={srcSet} />
+      <PausableMovie posterSrc={posterSrc} priority={priority} src={src} />
     </div>
   );
 };

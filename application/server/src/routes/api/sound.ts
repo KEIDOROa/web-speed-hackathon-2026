@@ -1,4 +1,5 @@
-import { promises as fs } from "fs";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "fs/promises";
+import { tmpdir } from "os";
 import path from "path";
 
 import { Router } from "express";
@@ -7,9 +8,21 @@ import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
+import { convertAudioToMp3 } from "@web-speed-hackathon-2026/server/src/utils/convert_sound";
 import { extractMetadataFromSound } from "@web-speed-hackathon-2026/server/src/utils/extract_metadata_from_sound";
 
-// 変換した音声の拡張子
+const AUDIO_EXTENSIONS = new Set([
+  "mp3",
+  "wav",
+  "flac",
+  "ogg",
+  "opus",
+  "m4a",
+  "aac",
+  "oga",
+  "wma",
+]);
+
 const EXTENSION = "mp3";
 
 export const soundRouter = Router();
@@ -23,17 +36,30 @@ soundRouter.post("/sounds", async (req, res) => {
   }
 
   const type = await fileTypeFromBuffer(req.body);
-  if (type === undefined || type.ext !== EXTENSION) {
+  if (type === undefined || AUDIO_EXTENSIONS.has(type.ext) !== true) {
     throw new httpErrors.BadRequest("Invalid file type");
   }
 
-  const soundId = uuidv4();
-
   const { artist, title } = await extractMetadataFromSound(req.body);
 
-  const filePath = path.resolve(UPLOAD_PATH, `./sounds/${soundId}.${EXTENSION}`);
-  await fs.mkdir(path.resolve(UPLOAD_PATH, "sounds"), { recursive: true });
-  await fs.writeFile(filePath, req.body);
+  const soundId = uuidv4();
+  const soundsDir = path.resolve(UPLOAD_PATH, "sounds");
+  await mkdir(soundsDir, { recursive: true });
+
+  const tmpDir = await mkdtemp(path.join(tmpdir(), "sound-upload-"));
+  try {
+    const inputPath = path.join(tmpDir, `input.${type.ext}`);
+    const tmpMp3 = path.join(tmpDir, `out.${EXTENSION}`);
+    await writeFile(inputPath, req.body);
+
+    await convertAudioToMp3(inputPath, tmpMp3);
+
+    const mp3Buffer = await readFile(tmpMp3);
+    const filePath = path.resolve(soundsDir, `./${soundId}.${EXTENSION}`);
+    await writeFile(filePath, mp3Buffer);
+  } finally {
+    await rm(tmpDir, { recursive: true, force: true });
+  }
 
   return res.status(200).type("application/json").send({ artist, id: soundId, title });
 });

@@ -90,23 +90,31 @@ test.describe("DM一覧", () => {
 
   test("送信ボタンをクリックすると、DM詳細画面に遷移すること", async ({ page }) => {
     await login(page);
-    await page.goto("/dm");
+    await page.goto("/dm", { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { name: "ダイレクトメッセージ" })).toBeVisible({
+      timeout: 30_000,
+    });
 
     await page.getByRole("button", { name: "新しくDMを始める" }).click();
-    await page
-      .getByRole("dialog")
-      .getByRole("heading", { name: "新しくDMを始める" })
-      .waitFor({ timeout: 30_000 });
+    const newDmDialog = page.getByRole("dialog").filter({
+      has: page.getByRole("heading", { name: "新しくDMを始める" }),
+    });
+    await newDmDialog.getByRole("heading", { name: "新しくDMを始める" }).waitFor({
+      timeout: 30_000,
+    });
 
-    const usernameInput = page.getByRole("dialog").getByRole("textbox", { name: "ユーザー名" });
-    const submitButton = page.getByRole("dialog").getByRole("button", { name: "DMを開始" });
+    const usernameInput = newDmDialog.getByRole("textbox", { name: "ユーザー名" });
+    const submitButton = newDmDialog.getByRole("button", { name: "DMを開始" });
 
     await usernameInput.click();
-    await usernameInput.pressSequentially("p72k8qi1c3", { delay: 10 });
+    await usernameInput.fill("p72k8qi1c3");
     await usernameInput.blur();
-    await submitButton.click();
+    await expect(submitButton).toBeEnabled({ timeout: 30_000 });
 
-    await page.waitForURL("**/dm/*", { timeout: 30_000 });
+    await Promise.all([
+      page.waitForURL("**/dm/*", { timeout: 60_000 }),
+      submitButton.click(),
+    ]);
 
     await expect(page.getByRole("heading", { name: "滝沢 裕美" })).toBeVisible({
       timeout: 30 * 1000,

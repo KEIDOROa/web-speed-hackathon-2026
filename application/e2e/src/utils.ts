@@ -107,9 +107,9 @@ export async function scrollUntilTimelineSelectorVisible(
   }
 }
 
-/** GIF動画をマスク（フレームが毎回変わるため） */
+/** 動画（canvas / video）をマスク */
 export function dynamicMediaMask(page: Page) {
-  return [page.locator("canvas"), page.locator("video"), page.locator("img[src$='.gif']")];
+  return [page.locator("canvas"), page.locator("video")];
 }
 
 export async function waitForImageToLoad(imageLocator: Locator): Promise<void> {
