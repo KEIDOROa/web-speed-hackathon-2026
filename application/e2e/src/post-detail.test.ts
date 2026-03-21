@@ -1,6 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-import { dynamicMediaMask, waitForPageToLoad, waitForVisibleMedia } from "./utils";
+import {
+  clickFirstTimelinePostBody,
+  dynamicMediaMask,
+  waitForPageToLoad,
+  waitForVisibleMedia,
+} from "./utils";
 
 test.describe("投稿詳細", () => {
   test.beforeEach(async ({ page }) => {
@@ -9,9 +14,8 @@ test.describe("投稿詳細", () => {
 
   test("投稿が表示される", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const firstArticle = page.locator("article").first();
-    await expect(firstArticle).toBeVisible({ timeout: 30_000 });
-    await firstArticle.click();
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 30_000 });
+    await clickFirstTimelinePostBody(page);
     await page.waitForURL("**/posts/*", { timeout: 30_000 });
 
     const article = page.locator("article").first();
@@ -27,9 +31,8 @@ test.describe("投稿詳細", () => {
 
   test("タイトルが「{ユーザー名} さんのつぶやき - CaX」", async ({ page }) => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
-    const firstArticle = page.locator("article").first();
-    await expect(firstArticle).toBeVisible({ timeout: 30_000 });
-    await firstArticle.click();
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 30_000 });
+    await clickFirstTimelinePostBody(page);
     await page.waitForURL("**/posts/*", { timeout: 30_000 });
 
     await expect(page).toHaveTitle(/さんのつぶやき - CaX/, { timeout: 30_000 });
@@ -107,7 +110,7 @@ test.describe("投稿詳細 - 写真", () => {
     await page.goto("/", { waitUntil: "domcontentloaded" });
     const imageArticle = page.locator("article:has(.grid img)").first();
     await expect(imageArticle).toBeVisible({ timeout: 30_000 });
-    await imageArticle.click();
+    await imageArticle.locator("time").first().click();
     await page.waitForURL("**/posts/*", { timeout: 30_000 });
 
     const coveredImage = page.locator(".grid img").first();

@@ -39,6 +39,17 @@ export const NavigationItem = ({ badge, href, icon, command, commandfor, text }:
           type="button"
           command={command}
           commandfor={commandfor}
+          onClick={() => {
+            if (command !== "show-modal" || commandfor === undefined) {
+              return;
+            }
+            window.setTimeout(() => {
+              const el = document.getElementById(commandfor) as HTMLDialogElement | null;
+              if (el !== null && !el.open) {
+                el.showModal();
+              }
+            }, 50);
+          }}
         >
           <span className="relative text-xl lg:pr-2 lg:text-3xl">
             {icon}

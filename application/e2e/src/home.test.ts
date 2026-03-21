@@ -1,6 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-import { dynamicMediaMask, scrollEntire, waitForPageToLoad, waitForVisibleMedia } from "./utils";
+import {
+  clickFirstTimelinePostBody,
+  dynamicMediaMask,
+  scrollEntire,
+  waitForPageToLoad,
+  waitForVisibleMedia,
+} from "./utils";
 
 test.describe("ホーム", () => {
   test.beforeEach(async ({ page }) => {
@@ -51,9 +57,8 @@ test.describe("ホーム", () => {
   });
 
   test("投稿クリック → 投稿詳細に遷移する", async ({ page }) => {
-    const firstArticle = page.locator("article").first();
-    await expect(firstArticle).toBeVisible({ timeout: 30_000 });
-    await firstArticle.click();
+    await expect(page.locator("article").first()).toBeVisible({ timeout: 30_000 });
+    await clickFirstTimelinePostBody(page);
     await page.waitForURL("**/posts/*", { timeout: 30_000 });
     expect(page.url()).toMatch(/\/posts\/[a-zA-Z0-9-]+/);
   });

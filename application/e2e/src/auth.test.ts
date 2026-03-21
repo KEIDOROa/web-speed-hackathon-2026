@@ -4,10 +4,14 @@ test.describe("サインイン・新規登録", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.goto("/not-found", { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => document.querySelectorAll("dialog").length >= 2, { timeout: 60_000 });
     const signinButton = page.getByRole("button", { name: "サインイン" });
     await expect(signinButton).toBeVisible({ timeout: 30_000 });
     await signinButton.click();
-    await page.getByRole("heading", { name: "サインイン" }).waitFor({ timeout: 30_000 });
+    await page
+      .getByRole("dialog")
+      .getByRole("heading", { name: "サインイン" })
+      .waitFor({ state: "visible", timeout: 30_000 });
   });
 
   test("新規登録ができる", async ({ page }) => {

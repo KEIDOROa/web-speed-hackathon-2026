@@ -1,6 +1,15 @@
 import { expect } from "@playwright/test";
 import type { Locator, Page } from "@playwright/test";
 
+export async function clickFirstTimelinePostBody(page: Page): Promise<void> {
+  await page
+    .locator("article")
+    .first()
+    .locator("div.text-cax-text.leading-relaxed")
+    .first()
+    .click({ timeout: 30_000 });
+}
+
 export async function login(
   page: Page,
   username: string = "o6yq16leo",

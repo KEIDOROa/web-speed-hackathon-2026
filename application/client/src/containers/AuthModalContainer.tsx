@@ -1,7 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-import type { UnknownAction } from "redux";
-import { reset, SubmissionError } from "redux-form";
+import { SubmissionError } from "redux-form";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 import { AuthModalPage } from "@web-speed-hackathon-2026/client/src/components/auth_modal/AuthModalPage";
@@ -56,25 +54,20 @@ async function getAuthErrorMessage(err: unknown, type: "signin" | "signup"): Pro
 }
 
 export const AuthModalContainer = ({ id, onUpdateActiveUser }: Props) => {
-  const dispatch = useDispatch();
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
     if (!ref.current) return;
     const element = ref.current;
 
-    const handleToggle = (ev: Event) => {
+    const handleToggle = () => {
       setResetKey((key) => key + 1);
-      const t = ev as ToggleEvent;
-      if (t.newState === "open") {
-        dispatch(reset("auth") as unknown as UnknownAction);
-      }
     };
     element.addEventListener("toggle", handleToggle);
     return () => {
       element.removeEventListener("toggle", handleToggle);
     };
-  }, [dispatch, ref, setResetKey]);
+  }, [ref, setResetKey]);
 
   const handleRequestCloseModal = useCallback(() => {
     ref.current?.close();
