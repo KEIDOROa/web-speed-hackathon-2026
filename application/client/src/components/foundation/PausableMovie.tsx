@@ -11,9 +11,7 @@ interface Props {
 
 /**
  * GIF動画を <img> で表示し、クリックで一時停止・再生を切り替えます。
- * 一時停止時は現在のフレームを canvas にキャプチャして静止表示します。
- * サーバーが Accept ヘッダーに応じて WebP を返す場合があるため、
- * GIF を確実に取得するために blob URL 経由で表示します。
+ * img は常に表示・再生し続け、一時停止時は canvas を上に重ねて静止表示します。
  */
 export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _priority }: Props) => {
   const imgRef = useRef<HTMLImageElement>(null);
@@ -62,16 +60,22 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
     if (!img || !canvas) return;
 
     if (isPlaying) {
-      // 一時停止: 現在のフレームを canvas にキャプチャ
-      canvas.width = img.naturalWidth || img.width;
-      canvas.height = img.naturalHeight || img.height;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.drawImage(img, 0, 0);
-      }
-      setIsPlaying(false);
+      // 一時停止: createImageBitmap で現在表示中のフレームを確実にキャプチャ
+      void createImageBitmap(img).then((bitmap) => {
+        const c = canvasRef.current;
+        if (!c) { bitmap.close(); return; }
+        c.width = bitmap.width;
+        c.height = bitmap.height;
+        const ctx = c.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(bitmap, 0, 0);
+        }
+        bitmap.close();
+        setIsPlaying(false);
+      });
+      return;
     } else {
-      // 再生: visibility切り替えのみ（imgはバックグラウンドで再生し続けている）
+      // 再生: canvas を非表示にするだけ（img は裏で再生し続けている）
       setIsPlaying(true);
     }
   }, [isPlaying]);
@@ -79,22 +83,20 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
       <div className="group relative block h-full w-full">
+        {/* img は常に表示。GIFアニメーションが途切れないようにする */}
         <img
           ref={imgRef}
-          className={[
-            "block h-full w-full object-cover",
-            isPlaying ? "visible" : "invisible",
-          ].join(" ")}
+          className="block h-full w-full object-cover"
           onLoad={() => setIsLoaded(true)}
           alt=""
         />
-        <canvas
-          ref={canvasRef}
-          className={[
-            "absolute inset-0 block h-full w-full object-cover",
-            isPlaying ? "invisible" : "visible",
-          ].join(" ")}
-        />
+        {/* 一時停止時のみ canvas を上に重ねて静止フレームを表示 */}
+        {!isPlaying && (
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 block h-full w-full object-cover"
+          />
+        )}
         <button
           aria-label={isPlaying ? "一時停止" : "再生"}
           className="absolute inset-0 z-10 block h-full w-full cursor-pointer border-0 bg-transparent p-0"

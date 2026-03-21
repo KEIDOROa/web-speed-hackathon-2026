@@ -8,6 +8,8 @@
   "scripts": {
     "typecheck": "tsc",
     "test": "playwright test",
+    "test:last-failed": "playwright test --last-failed",
+    "test:last-failed:serial": "cross-env E2E_WORKERS=1 playwright test --last-failed",
     "test:serial": "cross-env E2E_WORKERS=1 playwright test",
     "test:update": "playwright test --update-snapshots",
     "test:serial:update": "cross-env E2E_WORKERS=1 playwright test --update-snapshots"
