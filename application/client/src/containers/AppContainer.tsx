@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { HelmetProvider } from "react-helmet";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { Route, Routes, useLocation } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { initialAuthFromBootstrap, setCachedUser, clearCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
@@ -56,7 +56,6 @@ const LoadingFallback = () => (
 
 export const AppContainer = () => {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
@@ -128,8 +127,7 @@ export const AppContainer = () => {
     clearCachedUser();
     clearAuthHintOnClient();
     setActiveUser(null);
-    navigate("/");
-  }, [navigate]);
+  }, []);
 
   const authModalId = useId();
   const newPostModalId = useId();

@@ -8,12 +8,11 @@ function passwordNeedsSymbol(password: string): boolean {
   }
   for (let i = 0; i < password.length; i++) {
     const c = password.charCodeAt(i);
-    if (c < 48 || c > 57) {
-      if (c < 65 || c > 90) {
-        if (c < 97 || c > 122) {
-          return false;
-        }
-      }
+    const isDigit = c >= 48 && c <= 57;
+    const isUpper = c >= 65 && c <= 90;
+    const isLower = c >= 97 && c <= 122;
+    if (!isDigit && !isUpper && !isLower) {
+      return false;
     }
   }
   return true;
