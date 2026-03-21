@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
@@ -38,7 +38,7 @@ export const AppContainer = () => {
 
   const bootstrapMeGenerationRef = useRef(0);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const applyBootstrap = () => {
       const raw = (window as unknown as { __BOOTSTRAP_ME__?: { status: string; user?: Models.User } })
         .__BOOTSTRAP_ME__;
@@ -47,12 +47,14 @@ export const AppContainer = () => {
         setActiveUser(raw.user);
         setAuthReady(true);
       } else if (raw?.status === "guest") {
+        clearCachedUser();
+        clearAuthHintOnClient();
         setActiveUser(null);
         setAuthReady(true);
       }
     };
-    applyBootstrap();
     window.addEventListener("cax-bootstrap-me", applyBootstrap);
+    applyBootstrap();
     return () => window.removeEventListener("cax-bootstrap-me", applyBootstrap);
   }, []);
 
