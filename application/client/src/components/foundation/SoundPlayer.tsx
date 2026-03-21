@@ -1,4 +1,4 @@
-import { ReactEventHandler, useCallback, useEffect, useRef, useState } from "react";
+import { ReactEventHandler, useCallback, useRef, useState } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { SoundWaveSVG } from "@web-speed-hackathon-2026/client/src/components/foundation/SoundWaveSVG";
@@ -8,36 +8,8 @@ interface Props {
   sound: Models.Sound;
 }
 
-async function fetchSoundBinary(url: string): Promise<ArrayBuffer> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15_000);
-  try {
-    const response = await fetch(url, { method: "GET", signal: controller.signal });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return await response.arrayBuffer();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export const SoundPlayer = ({ sound }: Props) => {
   const soundUrl = getSoundPath(sound.id);
-
-  const [soundData, setSoundData] = useState<ArrayBuffer | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    setSoundData(null);
-    void fetchSoundBinary(soundUrl)
-      .then((buf) => {
-        if (!cancelled) setSoundData(buf);
-      })
-      .catch(() => {
-        if (!cancelled) setSoundData(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [soundUrl]);
 
   const [currentTimeRatio, setCurrentTimeRatio] = useState(0);
   const handleTimeUpdate = useCallback<ReactEventHandler<HTMLAudioElement>>((ev) => {
@@ -85,18 +57,7 @@ export const SoundPlayer = ({ sound }: Props) => {
             className="border-cax-border/30 bg-cax-surface relative w-full overflow-hidden rounded border"
             style={{ aspectRatio: "10 / 1", minHeight: "2.75rem" }}
           >
-            {soundData !== null ? (
-              <SoundWaveSVG playedRatio={currentTimeRatio} soundData={soundData} />
-            ) : (
-              <svg
-                aria-hidden
-                className="text-cax-accent absolute inset-0 block h-full w-full animate-pulse"
-                preserveAspectRatio="none"
-                viewBox="0 0 100 1"
-              >
-                <rect fill="currentColor" height="1" opacity={0.2} width="100" x="0" y="0" />
-              </svg>
-            )}
+            <SoundWaveSVG playedRatio={currentTimeRatio} />
           </div>
         </div>
       </div>

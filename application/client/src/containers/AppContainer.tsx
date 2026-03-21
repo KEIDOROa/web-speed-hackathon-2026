@@ -3,23 +3,12 @@ import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-<<<<<<< HEAD
-=======
-import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
-import { CrokContainer } from "@web-speed-hackathon-2026/client/src/containers/CrokContainer";
-import { DirectMessageContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer";
-import { DirectMessageListContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer";
-import { PostContainer } from "@web-speed-hackathon-2026/client/src/containers/PostContainer";
-import { SearchContainer } from "@web-speed-hackathon-2026/client/src/containers/SearchContainer";
-import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
->>>>>>> parent of 2a03d24 (軽量化)
 import { initialAuthFromBootstrap, setCachedUser, clearCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
 import { clearAuthHintOnClient } from "@web-speed-hackathon-2026/client/src/utils/auth_hint";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const NotFoundContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/NotFoundContainer").then(m => ({ default: m.NotFoundContainer })));
 const NewPostModalContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then(m => ({ default: m.NewPostModalContainer })));
-<<<<<<< HEAD
 const CrokContainer = lazy(() =>
   import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then(m => ({ default: m.CrokContainer })),
 );
@@ -59,10 +48,6 @@ const AuthModalContainer = lazy(() =>
     "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer"
   ).then((m) => ({ default: m.AuthModalContainer })),
 );
-=======
-const UserProfileContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer })));
-const TermContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/TermContainer").then(m => ({ default: m.TermContainer })));
->>>>>>> parent of 2a03d24 (軽量化)
 const LoadingFallback = () => (
   <div className="p-4">
     <p className="text-cax-text-muted text-2xl">読み込み中...</p>

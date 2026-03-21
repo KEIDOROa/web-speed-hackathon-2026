@@ -1,61 +1,10 @@
-import { useEffect, useRef, useState } from "react";
-
-interface ParsedData {
-  peaks: number[];
-}
-
-function maxInRange(arr: number[], start: number, end: number): number {
-  let m = 0;
-  const e = Math.min(end, arr.length);
-  for (let i = start; i < e; i++) {
-    const v = arr[i] as number;
-    if (v > m) {
-      m = v;
-    }
-  }
-  return m;
-}
+import { useRef } from "react";
 
 const PEAK_BAR_COUNT = 100;
 const HEIGHT_GAMMA = 0.82;
 const VISUAL_HEIGHT_CAP = 0.52;
 const BAR_WIDTH = 0.52;
 const BAR_RX_MAX = 0.12;
-
-async function calculate(data: ArrayBuffer): Promise<ParsedData> {
-  const audioCtx = new AudioContext();
-  try {
-    const buffer = await audioCtx.decodeAudioData(data.slice(0));
-    const leftData = Array.from(buffer.getChannelData(0), Math.abs);
-    const channels = buffer.numberOfChannels;
-    const normalized =
-      channels >= 2
-        ? (() => {
-            const rightData = Array.from(buffer.getChannelData(1), Math.abs);
-            return leftData.map((l, i) => (l + (rightData[i] ?? 0)) / 2);
-          })()
-        : leftData;
-
-    const chunkSize = Math.ceil(normalized.length / PEAK_BAR_COUNT);
-    const peaks: number[] = [];
-    for (let i = 0; i < normalized.length; i += chunkSize) {
-      const end = i + chunkSize;
-      peaks.push(maxInRange(normalized, i, end));
-    }
-    if (peaks.length > PEAK_BAR_COUNT) {
-      peaks.length = PEAK_BAR_COUNT;
-    }
-
-    return { peaks };
-  } finally {
-    void audioCtx.close();
-  }
-}
-
-interface Props {
-  soundData: ArrayBuffer;
-  playedRatio?: number;
-}
 
 function skeletonHeights(count: number): number[] {
   const out: number[] = [];
@@ -66,49 +15,13 @@ function skeletonHeights(count: number): number[] {
   return out;
 }
 
-export const SoundWaveSVG = ({ soundData, playedRatio = 0 }: Props) => {
+interface Props {
+  playedRatio?: number;
+}
+
+export const SoundWaveSVG = ({ playedRatio = 0 }: Props) => {
   const uniqueIdRef = useRef(`sw-${Math.random().toString(16).slice(2)}`);
-  const [{ peaks, decodeSettled }, setModel] = useState<{
-    peaks: number[];
-    decodeSettled: boolean;
-  }>({ peaks: [], decodeSettled: false });
-
-  useEffect(() => {
-    setModel({ peaks: [], decodeSettled: false });
-    let cancelled = false;
-    const run = () => {
-      if (cancelled) {
-        return;
-      }
-      void calculate(soundData)
-        .then(({ peaks: p }) => {
-          if (!cancelled) {
-            setModel({ peaks: p, decodeSettled: true });
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setModel({ peaks: [], decodeSettled: true });
-          }
-        });
-    };
-    const ric =
-      typeof requestIdleCallback !== "undefined"
-        ? requestIdleCallback(run, { timeout: 2500 })
-        : null;
-    const tid = ric === null ? window.setTimeout(run, 0) : null;
-    return () => {
-      cancelled = true;
-      if (ric !== null) {
-        cancelIdleCallback(ric);
-      }
-      if (tid !== null) {
-        clearTimeout(tid);
-      }
-    };
-  }, [soundData]);
-
-  const displayPeaks = peaks.length > 0 ? peaks : skeletonHeights(PEAK_BAR_COUNT);
+  const displayPeaks = skeletonHeights(PEAK_BAR_COUNT);
 
   const minPeak = displayPeaks.length > 0 ? Math.min(...displayPeaks) : 0;
   const maxPeak = displayPeaks.length > 0 ? Math.max(...displayPeaks) : 0;
@@ -119,8 +32,7 @@ export const SoundWaveSVG = ({ soundData, playedRatio = 0 }: Props) => {
   const clipWidth = safeRatio * PEAK_BAR_COUNT;
 
   const barInset = (1 - BAR_WIDTH) / 2;
-  const isPlaceholder = decodeSettled && peaks.length === 0;
-  const dimOpacity = isPlaceholder ? 0.35 : 0.5;
+  const dimOpacity = 0.5;
 
   const renderBars = (keySuffix: string) =>
     displayPeaks.map((peak, idx) => {
@@ -154,7 +66,7 @@ export const SoundWaveSVG = ({ soundData, playedRatio = 0 }: Props) => {
 
   return (
     <svg
-      className={`text-cax-accent absolute inset-0 block h-full w-full ${!decodeSettled ? "animate-pulse" : ""}`}
+      className="text-cax-accent absolute inset-0 block h-full w-full"
       preserveAspectRatio="none"
       viewBox={`0 0 ${PEAK_BAR_COUNT} 1`}
     >

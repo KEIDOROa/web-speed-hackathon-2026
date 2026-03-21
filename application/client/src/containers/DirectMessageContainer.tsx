@@ -19,6 +19,7 @@ interface DmTypingEvent {
 }
 
 const TYPING_INDICATOR_DURATION_MS = 10 * 1000;
+const TYPING_NOTIFY_MIN_INTERVAL_MS = 700;
 
 interface Props {
   activeUser: Models.User | null;
@@ -35,6 +36,7 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
 
   const [isPeerTyping, setIsPeerTyping] = useState(false);
   const peerTypingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingNotifyAtRef = useRef(0);
 
   const loadConversation = useCallback(async () => {
     if (activeUser == null) {
@@ -69,18 +71,34 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
     async (params: DirectMessageFormData) => {
       setIsSubmitting(true);
       try {
-        await sendJSON(`/api/v1/dm/${conversationId}/messages`, {
-          body: params.body,
+        const newMessage = await sendJSON<Models.DirectMessage>(
+          `/api/v1/dm/${conversationId}/messages`,
+          {
+            body: params.body,
+          },
+        );
+        setConversation((prev) => {
+          if (prev === null) {
+            return null;
+          }
+          if (prev.messages.some((m) => m.id === newMessage.id)) {
+            return prev;
+          }
+          return { ...prev, messages: [...prev.messages, newMessage] };
         });
-        loadConversation();
       } finally {
         setIsSubmitting(false);
       }
     },
-    [conversationId, loadConversation],
+    [conversationId],
   );
 
   const handleTyping = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTypingNotifyAtRef.current < TYPING_NOTIFY_MIN_INTERVAL_MS) {
+      return;
+    }
+    lastTypingNotifyAtRef.current = now;
     void sendJSON(`/api/v1/dm/${conversationId}/typing`, {});
   }, [conversationId]);
 
