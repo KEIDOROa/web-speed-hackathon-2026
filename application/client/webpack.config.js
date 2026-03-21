@@ -52,6 +52,7 @@ const config = {
       {
         context: ["/api"],
         target: "http://localhost:3000",
+        ws: true,
       },
     ],
     static: [PUBLIC_PATH, UPLOAD_PATH],
