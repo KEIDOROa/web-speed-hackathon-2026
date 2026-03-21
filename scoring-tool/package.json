@@ -10,7 +10,8 @@
     "format:oxlint": "oxlint --fix",
     "format:oxfmt": "oxfmt",
     "start": "tsx ./src/index.ts",
-    "score:dm": "tsx ./src/index.ts --applicationUrl http://localhost:3000 --targetName DM送信"
+    "score:dm": "tsx ./src/index.ts --applicationUrl http://localhost:3000 --targetName DM送信",
+    "score:user-flow": "tsx ./src/index.ts --applicationUrl http://localhost:3000 --targetName ユーザーフロー"
   },
   "dependencies": {
     "@actions/artifact": "2.3.2",

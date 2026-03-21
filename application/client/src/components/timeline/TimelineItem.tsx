@@ -49,7 +49,7 @@ export const TimelineItem = ({
   priorityMedia = false,
   contentVisibilityAuto = false,
 }: Props) => {
-  const { ref: articleRef, inView: mediaInView } = useInView<HTMLArticleElement>({
+  const { ref: articleRef, inView: mediaInView } = useInView<HTMLElement>({
     rootMargin: "240px 0px 240px 0px",
     once: true,
   });

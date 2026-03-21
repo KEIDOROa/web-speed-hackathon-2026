@@ -26,7 +26,7 @@ async function getAuthErrorMessage(err: unknown, type: "signin" | "signup"): Pro
   ) {
     const code = (legacy.responseJSON as { code: string }).code;
     if (code in ERROR_MESSAGES) {
-      return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES];
+      return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES]!;
     }
   }
 
@@ -41,7 +41,7 @@ async function getAuthErrorMessage(err: unknown, type: "signin" | "signup"): Pro
       ) {
         const code = (data as { code: string }).code;
         if (code in ERROR_MESSAGES) {
-          return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES];
+          return ERROR_MESSAGES[code as keyof typeof ERROR_MESSAGES]!;
         }
       }
     } catch {

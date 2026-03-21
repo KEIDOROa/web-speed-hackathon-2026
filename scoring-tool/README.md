@@ -57,6 +57,32 @@ pnpm start --applicationUrl <applicationUrl> --targetName DM送信
 pnpm run score:dm
 ```
 
+### ユーザーフロー計測をまとめて試す
+
+`ユーザーフロー:` で始まる計測名は次の **5 件**です（`--targetName` に共通部分の `ユーザーフロー` を渡すと、これらだけが順に実行されます）。
+
+1. ユーザー登録 → サインアウト → サインイン  
+2. DM送信  
+3. 検索 → 結果表示  
+4. Crok AIチャット  
+5. 投稿  
+
+```bash
+pnpm run score:user-flow
+```
+
+任意の URL の場合:
+
+```bash
+pnpm start --applicationUrl <applicationUrl> --targetName ユーザーフロー
+```
+
+`application` と `scoring-tool` が隣にある構成なら、`application` から:
+
+```bash
+pnpm run score:user-flow
+```
+
 ## LICENSE
 
 MPL-2.0 by CyberAgent, Inc.
