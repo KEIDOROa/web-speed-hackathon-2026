@@ -9,6 +9,7 @@ export const Timeline = ({ timeline }: Props) => {
     .map((_, i) => i)
     .filter((i) => {
       const post = timeline[i];
+      if (!post) return false;
       return (post.images?.length ?? 0) > 0 || Boolean(post.movie);
     });
   const priorityMediaIndices = new Set(mediaIndices.slice(0, 2));
