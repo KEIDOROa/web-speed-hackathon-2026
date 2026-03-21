@@ -2,6 +2,23 @@ import { FormErrors } from "redux-form";
 
 import { AuthFormData } from "@web-speed-hackathon-2026/client/src/auth/types";
 
+function passwordNeedsSymbol(password: string): boolean {
+  if (password.length === 0) {
+    return false;
+  }
+  for (let i = 0; i < password.length; i++) {
+    const c = password.charCodeAt(i);
+    if (c < 48 || c > 57) {
+      if (c < 65 || c > 90) {
+        if (c < 97 || c > 122) {
+          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
 export const validate = (values: AuthFormData): FormErrors<AuthFormData> => {
   const errors: FormErrors<AuthFormData> = {};
 
@@ -13,18 +30,16 @@ export const validate = (values: AuthFormData): FormErrors<AuthFormData> => {
     errors.name = "名前を入力してください";
   }
 
-  if (/^(?:[^\P{Letter}&&\P{Number}]*){16,}$/v.test(normalizedPassword)) {
-    errors.password = "パスワードには記号を含める必要があります";
-  }
   if (normalizedPassword.length === 0) {
     errors.password = "パスワードを入力してください";
+  } else if (passwordNeedsSymbol(normalizedPassword)) {
+    errors.password = "パスワードには記号を含める必要があります";
   }
 
-  if (!/^[a-zA-Z0-9_]*$/.test(normalizedUsername)) {
-    errors.username = "ユーザー名に使用できるのは英数字とアンダースコア(_)のみです";
-  }
   if (normalizedUsername.length === 0) {
     errors.username = "ユーザー名を入力してください";
+  } else if (!/^[a-zA-Z0-9_]*$/.test(normalizedUsername)) {
+    errors.username = "ユーザー名に使用できるのは英数字とアンダースコア(_)のみです";
   }
 
   return errors;

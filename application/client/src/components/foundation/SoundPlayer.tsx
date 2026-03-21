@@ -57,7 +57,7 @@ export const SoundPlayer = ({ sound }: Props) => {
             className="border-cax-border/30 bg-cax-surface relative w-full overflow-hidden rounded border"
             style={{ aspectRatio: "10 / 1", minHeight: "2.75rem" }}
           >
-            <SoundWaveSVG playedRatio={currentTimeRatio} />
+            <SoundWaveSVG audioSrc={soundUrl} playedRatio={currentTimeRatio} />
           </div>
         </div>
       </div>

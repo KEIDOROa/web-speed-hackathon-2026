@@ -1,4 +1,6 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+
+import { decodePeaksFromUrl } from "@web-speed-hackathon-2026/client/src/utils/audio_waveform_peaks";
 
 const PEAK_BAR_COUNT = 100;
 const HEIGHT_GAMMA = 0.82;
@@ -6,22 +8,54 @@ const VISUAL_HEIGHT_CAP = 0.52;
 const BAR_WIDTH = 0.52;
 const BAR_RX_MAX = 0.12;
 
-function skeletonHeights(count: number): number[] {
+/** 読み込み失敗時のみ使う簡易パターン（正弦ではなく乱数ベースでプレースホルダー感を抑える） */
+function fallbackHeights(count: number): number[] {
+  let seed = 0x9e3779b9;
   const out: number[] = [];
   for (let i = 0; i < count; i++) {
-    const t = (i / count) * Math.PI * 2;
-    out.push(0.12 + 0.22 * (0.5 + 0.5 * Math.sin(t * 3.1)));
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    const r = (seed >>> 0) / 0xffffffff;
+    out.push(0.15 + 0.35 * r);
   }
   return out;
 }
 
 interface Props {
+  audioSrc: string;
   playedRatio?: number;
 }
 
-export const SoundWaveSVG = ({ playedRatio = 0 }: Props) => {
+export const SoundWaveSVG = ({ audioSrc, playedRatio = 0 }: Props) => {
   const uniqueIdRef = useRef(`sw-${Math.random().toString(16).slice(2)}`);
-  const displayPeaks = skeletonHeights(PEAK_BAR_COUNT);
+  const [displayPeaks, setDisplayPeaks] = useState<number[]>(() => fallbackHeights(PEAK_BAR_COUNT));
+
+  useEffect(() => {
+    const ac = new AbortController();
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const peaks = await decodePeaksFromUrl(audioSrc, PEAK_BAR_COUNT, ac.signal);
+        if (!cancelled) {
+          setDisplayPeaks(peaks);
+        }
+      } catch (e) {
+        if ((e as Error).name === "AbortError") {
+          return;
+        }
+        if (!cancelled) {
+          setDisplayPeaks(fallbackHeights(PEAK_BAR_COUNT));
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      ac.abort();
+    };
+  }, [audioSrc]);
 
   const minPeak = displayPeaks.length > 0 ? Math.min(...displayPeaks) : 0;
   const maxPeak = displayPeaks.length > 0 ? Math.max(...displayPeaks) : 0;
