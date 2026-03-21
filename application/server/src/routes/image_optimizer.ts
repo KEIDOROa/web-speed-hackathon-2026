@@ -16,11 +16,10 @@ const PROFILE_WIDTH_WHITELIST = new Set([64, 96, 128]);
 const MOVIE_WIDTH_WHITELIST = new Set([280, 360, 480]);
 
 function findMediaFile(reqPath: string): string | null {
-  const relative = reqPath.replace(/^\//, "");
-  const uploadFile = path.join(UPLOAD_PATH, relative);
+  const uploadFile = path.join(UPLOAD_PATH, reqPath);
   if (fs.existsSync(uploadFile)) return uploadFile;
 
-  const publicFile = path.join(PUBLIC_PATH, relative);
+  const publicFile = path.join(PUBLIC_PATH, reqPath);
   if (fs.existsSync(publicFile)) return publicFile;
 
   return null;
@@ -110,7 +109,7 @@ imageOptimizerRouter.get("/movies/:movieId/poster", async (req, res, next) => {
     const format = supportsWebp ? "webp" : "jpeg";
     const contentType = supportsWebp ? "image/webp" : "image/jpeg";
 
-    const relPath = `movies/${movieId}.jpg`;
+    const relPath = `movies/${movieId}.gif`;
     const cacheKey = `${relPath}:poster:${maxWidth}:${format}`;
     const cached = cache.get(cacheKey);
     if (cached) {
@@ -127,7 +126,7 @@ imageOptimizerRouter.get("/movies/:movieId/poster", async (req, res, next) => {
     }
 
     const compact = maxWidth <= 360;
-    const pipeline = sharp(filePath).resize({
+    const pipeline = sharp(filePath, { animated: false, limitInputPixels: false }).resize({
       width: maxWidth,
       height: maxWidth,
       fit: "inside",
@@ -151,26 +150,85 @@ imageOptimizerRouter.get("/movies/:movieId/poster", async (req, res, next) => {
   }
 });
 
+async function transcodeMovie(
+  filePath: string,
+  maxWidth: number,
+  acceptHeader: string,
+): Promise<{ buffer: Buffer; contentType: string; cacheVariant: "webp" | "gif" }> {
+  const basePipeline = () =>
+    sharp(filePath, { animated: true, limitInputPixels: false }).resize({
+      width: maxWidth,
+      height: maxWidth,
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+
+  const compact = maxWidth <= 360;
+  const preferWebp = acceptHeader.includes("image/webp");
+
+  if (preferWebp) {
+    try {
+      const buffer = await basePipeline()
+        .webp({ quality: compact ? 44 : 50, effort: 4 })
+        .toBuffer();
+      return { buffer, contentType: "image/webp", cacheVariant: "webp" };
+    } catch {
+      /* アニメ WebP 化に失敗した場合は GIF にフォールバック */
+    }
+  }
+
+  const buffer = await basePipeline().gif({ effort: 4, colours: 128 }).toBuffer();
+  return { buffer, contentType: "image/gif", cacheVariant: "gif" };
+}
+
 imageOptimizerRouter.get("/movies/{*path}", async (req, res, next) => {
   try {
     const reqPath = req.path;
 
-    if (!reqPath.endsWith(".mp4")) {
+    if (!reqPath.endsWith(".gif")) {
       return next();
     }
+
+    const wQuery = req.query["w"];
+    const wParsed = typeof wQuery === "string" ? Number.parseInt(wQuery, 10) : NaN;
+    let maxWidth = 480;
+    if (Number.isFinite(wParsed) && MOVIE_WIDTH_WHITELIST.has(wParsed)) {
+      maxWidth = wParsed;
+    }
+
+    const acceptHeader = req.headers.accept || "";
+    const preferWebp = acceptHeader.includes("image/webp");
 
     const filePath = findMediaFile(reqPath);
     if (filePath == null) {
       return next();
     }
 
-    res.setHeader("Content-Type", "video/mp4");
-    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    res.sendFile(path.resolve(filePath), (err) => {
-      if (err) {
-        next(err);
-      }
-    });
+    const sendCached = (entry: { buffer: Buffer; contentType: string }) => {
+      res.setHeader("Content-Type", entry.contentType);
+      res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      res.setHeader("Vary", "Accept");
+      res.send(entry.buffer);
+    };
+
+    const desiredVariant: "webp" | "gif" = preferWebp ? "webp" : "gif";
+    const desiredKey = `${reqPath}:movie:${desiredVariant}:${maxWidth}`;
+    const desiredHit = cache.get(desiredKey);
+    if (desiredHit) {
+      sendCached(desiredHit);
+      return;
+    }
+
+    const { buffer, contentType, cacheVariant } = await transcodeMovie(
+      filePath,
+      maxWidth,
+      acceptHeader,
+    );
+
+    const storeKey = `${reqPath}:movie:${cacheVariant}:${maxWidth}`;
+    cache.set(storeKey, { buffer, contentType });
+
+    sendCached({ buffer, contentType });
   } catch {
     next();
   }

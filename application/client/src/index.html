@@ -89,7 +89,7 @@
               var lkm = document.createElement("link");
               lkm.rel = "preload";
               lkm.as = "image";
-              lkm.href = "/movies/" + post.movie.id + "/poster?w=360";
+              lkm.href = "/movies/" + post.movie.id + ".gif?w=360";
               lkm.fetchPriority = "high";
               document.head.appendChild(lkm);
             }
@@ -154,7 +154,7 @@
               var linkMv = document.createElement("link");
               linkMv.rel = "preload";
               linkMv.as = "image";
-              linkMv.href = "/movies/" + mediaPost.movie.id + "/poster?w=280";
+              linkMv.href = "/movies/" + mediaPost.movie.id + ".gif?w=280";
               linkMv.fetchPriority = "high";
               document.head.appendChild(linkMv);
             }
