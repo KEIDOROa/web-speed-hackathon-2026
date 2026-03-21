@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
-import gifler from "gifler";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
-
-type GifAnimator = Awaited<ReturnType<ReturnType<typeof gifler>["animate"]>>;
 
 interface Props {
   src: string;
@@ -12,147 +9,114 @@ interface Props {
   priority?: boolean;
 }
 
-function drawImageFallback(canvas: HTMLCanvasElement, imageUrl: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const w = img.naturalWidth || 1;
-      const h = img.naturalHeight || 1;
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      if (ctx === null) {
-        reject(new Error("no 2d context"));
-        return;
-      }
-      ctx.drawImage(img, 0, 0);
-      resolve();
-    };
-    img.onerror = () => reject(new Error("image load failed"));
-    img.src = imageUrl;
-  });
-}
-
 /**
- * アニメ GIF を canvas に描画し、クリックで一時停止・再生を切り替えます。
- * サーバーが Accept: image/webp で WebP を返すため、gif デコード用に Accept: image/gif で取得します。
+ * GIF動画を <img> で表示し、クリックで一時停止・再生を切り替えます。
+ * 一時停止時は現在のフレームを canvas にキャプチャして静止表示します。
+ * サーバーが Accept ヘッダーに応じて WebP を返す場合があるため、
+ * GIF を確実に取得するために blob URL 経由で表示します。
  */
 export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _priority }: Props) => {
+  const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animatorRef = useRef<GifAnimator | null>(null);
-  const intersectionObserverRef = useRef<IntersectionObserver | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    let objectUrl: string | null = null;
-    const canvas = canvasRef.current;
-    if (canvas === null) {
-      return;
-    }
-
-    const ensurePlaying = () => {
-      const animator = animatorRef.current;
-      if (animator === null || animator.running()) {
-        return;
-      }
-      animator.start();
-    };
-
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") {
-        ensurePlaying();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
 
     void (async () => {
       try {
-        const response = await fetch(src, {
+        const res = await fetch(src, {
           credentials: "same-origin",
           headers: { Accept: "image/gif" },
         });
-        const buffer = await response.arrayBuffer();
-        if (cancelled) {
-          return;
-        }
-        objectUrl = URL.createObjectURL(new Blob([buffer], { type: "image/gif" }));
-        const animator = await gifler(objectUrl).animate(canvas);
-        if (cancelled) {
-          animator.stop();
-          return;
-        }
-        animatorRef.current = animator;
-        if (!animator.running()) {
-          animator.start();
-        }
-        intersectionObserverRef.current?.disconnect();
-        const movieRoot = canvas.closest("[data-movie-area]");
-        if (movieRoot !== null) {
-          const io = new IntersectionObserver(
-            (entries) => {
-              for (const e of entries) {
-                if (e.isIntersecting) {
-                  ensurePlaying();
-                }
-              }
-            },
-            { root: null, rootMargin: "80px", threshold: 0 },
-          );
-          io.observe(movieRoot);
-          intersectionObserverRef.current = io;
-        }
-        requestAnimationFrame(() => {
-          ensurePlaying();
-        });
-      } catch {
+        if (!res.ok) return;
+        const blob = await res.blob();
         if (cancelled) return;
-        try {
-          await drawImageFallback(canvas, src);
-        } catch {
-          /* 読み込み失敗時は空の canvas のまま */
+
+        const blobUrl = URL.createObjectURL(blob);
+        blobUrlRef.current = blobUrl;
+
+        const img = imgRef.current;
+        if (img) {
+          img.src = blobUrl;
         }
+      } catch {
+        /* fetch 失敗時は何もしない */
       }
     })();
 
     return () => {
       cancelled = true;
-      document.removeEventListener("visibilitychange", onVisibility);
-      intersectionObserverRef.current?.disconnect();
-      intersectionObserverRef.current = null;
-      animatorRef.current?.stop();
-      animatorRef.current = null;
-      if (objectUrl !== null) {
-        URL.revokeObjectURL(objectUrl);
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
       }
     };
   }, [src]);
 
   const handleToggle = useCallback(() => {
-    const animator = animatorRef.current;
-    if (animator === null) {
-      return;
-    }
-    if (animator.running()) {
-      animator.stop();
+    const img = imgRef.current;
+    const canvas = canvasRef.current;
+    if (!img || !canvas) return;
+
+    if (isPlaying) {
+      // 一時停止: 現在のフレームを canvas にキャプチャ
+      canvas.width = img.naturalWidth || img.width;
+      canvas.height = img.naturalHeight || img.height;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+      }
+      setIsPlaying(false);
     } else {
-      animator.start();
+      // 再生: visibility切り替えのみ（imgはバックグラウンドで再生し続けている）
+      setIsPlaying(true);
     }
-  }, []);
+  }, [isPlaying]);
 
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
-      <div className="relative block h-full w-full">
+      <div className="group relative block h-full w-full">
+        <img
+          ref={imgRef}
+          className={[
+            "block h-full w-full object-cover",
+            isPlaying ? "visible" : "invisible",
+          ].join(" ")}
+          onLoad={() => setIsLoaded(true)}
+          alt=""
+        />
+        <canvas
+          ref={canvasRef}
+          className={[
+            "absolute inset-0 block h-full w-full object-cover",
+            isPlaying ? "invisible" : "visible",
+          ].join(" ")}
+        />
         <button
-          aria-label="動画の再生・一時停止"
+          aria-label={isPlaying ? "一時停止" : "再生"}
           className="absolute inset-0 z-10 block h-full w-full cursor-pointer border-0 bg-transparent p-0"
           type="button"
           onClick={handleToggle}
-        >
-          <canvas
-            ref={canvasRef}
-            className="pointer-events-none block h-full w-full object-cover"
-          />
-        </button>
+        />
+        {isLoaded && (
+          <span
+            className="pointer-events-none absolute bottom-3 right-3 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white shadow-lg transition-opacity opacity-0 group-hover:opacity-100"
+          >
+            {isPlaying ? (
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                <rect x="6" y="5" width="4" height="14" rx="1" />
+                <rect x="14" y="5" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.04-6.86a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
+              </svg>
+            )}
+          </span>
+        )}
       </div>
     </AspectRatioBox>
   );

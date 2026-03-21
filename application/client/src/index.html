@@ -20,11 +20,32 @@
           return r.ok ? r.json() : Promise.reject(r);
         }).catch(function(e) { clearTimeout(tid); return Promise.reject(e); });
       }
+      function fetchMeForBootstrap(ms) {
+        var ctrl = new AbortController();
+        var tid = setTimeout(function() { ctrl.abort(); }, ms);
+        return fetch("/api/v1/me", { signal: ctrl.signal, credentials: "same-origin" }).then(function(r) {
+          clearTimeout(tid);
+          if (r.status === 401) {
+            return null;
+          }
+          if (!r.ok) {
+            return Promise.reject(r);
+          }
+          return r.json();
+        }).catch(function(e) {
+          clearTimeout(tid);
+          return Promise.reject(e);
+        });
+      }
       window.__BOOTSTRAP_ME__ = { status: 'pending' };
-      var meP = fetchWithTimeout('/api/v1/me', 30000);
+      var meP = fetchMeForBootstrap(30000);
       window.__PREFETCH__['/api/v1/me'] = meP;
       meP.then(function(user) {
-        window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
+        if (user === null) {
+          window.__BOOTSTRAP_ME__ = { status: 'guest' };
+        } else {
+          window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
+        }
         window.dispatchEvent(new Event('cax-bootstrap-me'));
       }).catch(function() {
         window.__BOOTSTRAP_ME__ = { status: 'guest' };
@@ -56,13 +77,6 @@
           link.href = '/images/' + mediaPost.images[0].id + '.jpg?w=480';
           link.fetchPriority = 'high';
           document.head.appendChild(link);
-        } else if (mediaPost && mediaKind === 'movie' && mediaPost.movie && mediaPost.movie.id) {
-          var linkM = document.createElement('link');
-          linkM.rel = 'preload';
-          linkM.as = 'image';
-          linkM.href = '/movies/' + mediaPost.movie.id + '.gif?w=480';
-          linkM.fetchPriority = 'high';
-          document.head.appendChild(linkM);
         }
         var first = posts[0];
         if (first && first.user && first.user.profileImage) {

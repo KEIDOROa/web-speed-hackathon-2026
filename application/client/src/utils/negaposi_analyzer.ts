@@ -1,17 +1,16 @@
+import { getKuromojiTokenizer } from "@web-speed-hackathon-2026/client/src/utils/kuromoji_tokenizer";
+
 type SentimentResult = {
   score: number;
   label: "positive" | "negative" | "neutral";
 };
 
 export async function analyzeSentiment(text: string): Promise<SentimentResult> {
-  const [{ default: Bluebird }, kuromoji, { default: analyze }] = await Promise.all([
-    import("bluebird"),
-    import("kuromoji"),
+  const [{ default: analyze }, tokenizer] = await Promise.all([
     import("negaposi-analyzer-ja"),
+    getKuromojiTokenizer(),
   ]);
 
-  const builder = Bluebird.promisifyAll(kuromoji.builder({ dicPath: "/dicts" }));
-  const tokenizer = await builder.buildAsync();
   const tokens = tokenizer.tokenize(text);
 
   const score = analyze(tokens);

@@ -10,9 +10,17 @@ export async function fetchJSON<T>(url: string): Promise<T> {
   if (prefetched != null && bag != null) {
     delete bag[url];
     try {
-      return (await prefetched) as T;
-    } catch {
-      /* index.html の fetchWithTimeout が先に失敗した場合は通常取得へ */
+      const data = await prefetched;
+      if (url === "/api/v1/me" && data === null) {
+        const guest = new Response(null, { status: 401, statusText: "Unauthorized" });
+        throw guest;
+      }
+      return data as T;
+    } catch (err) {
+      if (err instanceof Response && err.status === 401 && url === "/api/v1/me") {
+        throw err;
+      }
+      /* index.html のプリフェッチが先に失敗した場合は通常取得へ */
     }
   }
   const response = await fetch(url, { method: "GET", credentials: "include" });

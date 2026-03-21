@@ -101,7 +101,7 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
             return (
               <li className="grid" key={conversation.id}>
                 <Link
-                  aria-label={`@${peer.username}`}
+                  aria-label={peer.username}
                   className="hover:bg-cax-surface-subtle px-4"
                   to={`/dm/${conversation.id}`}
                 >

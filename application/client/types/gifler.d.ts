@@ -22,6 +22,11 @@ declare module "gifler" {
     animate(selector: string | HTMLCanvasElement): Promise<Animator>;
   }
 
+  export class Gif {
+    constructor(dataPromise: Promise<ArrayBuffer>);
+    animate(selector: string | HTMLCanvasElement): Promise<Animator>;
+  }
+
   function gifler(url: string): GifHandle;
 
   export = gifler;

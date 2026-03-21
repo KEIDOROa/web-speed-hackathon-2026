@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
 import { formatLongDate, toISOString } from "@web-speed-hackathon-2026/client/src/utils/date";
 import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/ImageArea";
@@ -11,7 +13,7 @@ interface Props {
   lcpPriority?: boolean;
 }
 
-export const PostItem = ({ post, lcpPriority = false }: Props) => {
+export const PostItem = memo(function PostItem({ post, lcpPriority = false }: Props) {
   return (
     <article className="px-1 sm:px-4">
       <div className="border-cax-border border-b px-4 pt-4 pb-4">
@@ -85,4 +87,4 @@ export const PostItem = ({ post, lcpPriority = false }: Props) => {
       </div>
     </article>
   );
-};
+});
