@@ -33,10 +33,10 @@ const BROWSER_JS_HEAP_ARGS = browserJsHeapArgs();
 // --- 並列ワーカー（主にここを読み・環境変数で調整）---
 // ・タイムアウトや VRT のブレが出る → E2E_WORKERS=1 で逐次実行にすると安定しやすい
 // ・CPU に余裕があり短縮したい → E2E_WORKERS=4 など明示（未指定時は論理 CPU の半分、最低 1）
-// ・並列を抑えたい（例: 14 → 7）→ E2E_WORKERS=7 または pnpm run test:7
+// ・並列を抑えたい（例: 14 → 2）→ E2E_WORKERS=2 または pnpm run test:2
 // ・負荷を下げる（実験的）→ E2E_LIGHT_BROWSER=1 で同梱 Chromium + 軽量起動引数（不安定なら使わない）
 // ・メモリ（アプリから触れる範囲）
-//   - Node（Playwright 本体・テストランナー）: NODE_OPTIONS=--max-old-space-size=8192 など → pnpm run test:heap / test:7:heap
+//   - Node（Playwright 本体・テストランナー）: NODE_OPTIONS=--max-old-space-size=8192 など → pnpm run test:heap / test:2:heap
 //   - ブラウザ各プロセス: E2E_BROWSER_JS_HEAP_MB=4096（レンダラ V8。ワーカー数ぶん乗る）
 //   - Windows の「物理メモリに振る」配分は OS / 仮想メモリ設定。ここからは変更できない
 const DEFAULT_PARALLEL_WORKERS = Math.max(1, Math.floor(os.cpus().length / 2));
