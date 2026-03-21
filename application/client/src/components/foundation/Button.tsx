@@ -1,10 +1,14 @@
 import classNames from "classnames";
-import { ComponentPropsWithRef, ReactNode } from "react";
+import { ComponentPropsWithRef, type MouseEvent, ReactNode } from "react";
+
+import { scheduleShowModalFallback } from "@web-speed-hackathon-2026/client/src/utils/schedule_show_modal_fallback";
 
 interface Props extends ComponentPropsWithRef<"button"> {
   variant?: "primary" | "secondary";
   leftItem?: ReactNode;
   rightItem?: ReactNode;
+  command?: string;
+  commandfor?: string;
 }
 
 export const Button = ({
@@ -14,8 +18,19 @@ export const Button = ({
   className,
   children,
   type = "button",
+  onClick,
+  command,
+  commandfor,
   ...props
 }: Props) => {
+  const handleClick =
+    command === "show-modal" && commandfor !== undefined
+      ? (e: MouseEvent<HTMLButtonElement>) => {
+          onClick?.(e);
+          scheduleShowModalFallback(commandfor);
+        }
+      : onClick;
+
   return (
     <button
       className={classNames(
@@ -30,6 +45,9 @@ export const Button = ({
         className,
       )}
       type={type}
+      command={command}
+      commandfor={commandfor}
+      onClick={handleClick}
       {...props}
     >
       {leftItem}

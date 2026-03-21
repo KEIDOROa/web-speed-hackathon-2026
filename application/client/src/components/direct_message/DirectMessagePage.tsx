@@ -1,13 +1,14 @@
 import classNames from "classnames";
 import {
   ChangeEvent,
+  FormEvent,
+  KeyboardEvent,
+  memo,
   useCallback,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
-  KeyboardEvent,
-  FormEvent,
-  useLayoutEffect,
 } from "react";
 
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
@@ -25,7 +26,7 @@ interface Props {
   onSubmit: (params: DirectMessageFormData) => Promise<void>;
 }
 
-export const DirectMessagePage = ({
+export const DirectMessagePage = memo(function DirectMessagePage({
   conversationError,
   conversation,
   activeUser,
@@ -33,7 +34,7 @@ export const DirectMessagePage = ({
   isSubmitting,
   onTyping,
   onSubmit,
-}: Props) => {
+}: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const textAreaId = useId();
 
@@ -126,6 +127,7 @@ export const DirectMessagePage = ({
 
             return (
               <li
+                key={message.id}
                 className={classNames(
                   "flex flex-col w-full",
                   isActiveUserSend ? "items-end" : "items-start",
@@ -192,4 +194,4 @@ export const DirectMessagePage = ({
       </div>
     </section>
   );
-};
+});

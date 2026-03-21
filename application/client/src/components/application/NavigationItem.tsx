@@ -2,6 +2,7 @@ import classNames from "classnames";
 import { useLocation } from "react-router";
 
 import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
+import { scheduleShowModalFallback } from "@web-speed-hackathon-2026/client/src/utils/schedule_show_modal_fallback";
 
 interface Props {
   badge?: React.ReactNode;
@@ -40,15 +41,9 @@ export const NavigationItem = ({ badge, href, icon, command, commandfor, text }:
           command={command}
           commandfor={commandfor}
           onClick={() => {
-            if (command !== "show-modal" || commandfor === undefined) {
-              return;
+            if (command === "show-modal" && commandfor !== undefined) {
+              scheduleShowModalFallback(commandfor);
             }
-            window.setTimeout(() => {
-              const el = document.getElementById(commandfor) as HTMLDialogElement | null;
-              if (el !== null && !el.open) {
-                el.showModal();
-              }
-            }, 50);
           }}
         >
           <span className="relative text-xl lg:pr-2 lg:text-3xl">

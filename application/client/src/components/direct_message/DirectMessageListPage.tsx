@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
@@ -25,11 +25,15 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
 
     try {
       const conversations = await fetchJSON<Array<Models.DirectMessageConversation>>("/api/v1/dm");
-      setConversations(conversations);
-      setError(null);
+      startTransition(() => {
+        setConversations(conversations);
+        setError(null);
+      });
     } catch (error) {
-      setConversations(null);
-      setError(error as Error);
+      startTransition(() => {
+        setConversations(null);
+        setError(error as Error);
+      });
     }
   }, [activeUser]);
 

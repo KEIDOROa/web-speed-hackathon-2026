@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import { useParams } from "react-router";
 
@@ -107,8 +107,21 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
 
   useWs(dmWsUrl, (event: DmUpdateEvent | DmTypingEvent) => {
     if (event.type === "dm:conversation:message") {
-      void loadConversation().then(() => {
-        if (event.payload.sender.id !== activeUser?.id) {
+      const msg = event.payload;
+      startTransition(() => {
+        setConversation((prev) => {
+          if (prev === null) {
+            return null;
+          }
+          const idx = prev.messages.findIndex((m) => m.id === msg.id);
+          if (idx >= 0) {
+            const nextMessages = [...prev.messages];
+            nextMessages[idx] = msg;
+            return { ...prev, messages: nextMessages };
+          }
+          return { ...prev, messages: [...prev.messages, msg] };
+        });
+        if (msg.sender.id !== activeUser?.id) {
           setIsPeerTyping(false);
           if (peerTypingTimeoutRef.current !== null) {
             clearTimeout(peerTypingTimeoutRef.current);
@@ -116,15 +129,19 @@ export const DirectMessageContainer = ({ activeUser, authModalId, authReady }: P
           peerTypingTimeoutRef.current = null;
         }
       });
-      void sendRead();
+      queueMicrotask(() => {
+        void sendRead();
+      });
     } else if (event.type === "dm:conversation:typing") {
-      setIsPeerTyping(true);
-      if (peerTypingTimeoutRef.current !== null) {
-        clearTimeout(peerTypingTimeoutRef.current);
-      }
-      peerTypingTimeoutRef.current = setTimeout(() => {
-        setIsPeerTyping(false);
-      }, TYPING_INDICATOR_DURATION_MS);
+      startTransition(() => {
+        setIsPeerTyping(true);
+        if (peerTypingTimeoutRef.current !== null) {
+          clearTimeout(peerTypingTimeoutRef.current);
+        }
+        peerTypingTimeoutRef.current = setTimeout(() => {
+          setIsPeerTyping(false);
+        }, TYPING_INDICATOR_DURATION_MS);
+      });
     }
   });
 

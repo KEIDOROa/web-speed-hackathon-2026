@@ -31,15 +31,18 @@ export async function calculateDmChatFlowAction({
   }
   consola.debug("DmChatFlowAction - navigate end");
 
-  // サインイン
+  // サインイン（モーダル用チャンク読み込み後に操作する）
   consola.debug("DmChatFlowAction - signin");
   try {
+    await playwrightPage.waitForFunction(() => document.querySelectorAll("dialog").length >= 2, {
+      timeout: 60 * 1000,
+    });
     const signinButton = playwrightPage.getByRole("button", { name: "サインイン" });
     await signinButton.click();
     await playwrightPage
       .getByRole("dialog")
       .getByRole("heading", { name: "サインイン" })
-      .waitFor({ timeout: 10 * 1000 });
+      .waitFor({ state: "visible", timeout: 10 * 1000 });
   } catch (err) {
     throw new Error("サインインモーダルの表示に失敗しました", { cause: err });
   }
@@ -47,7 +50,7 @@ export async function calculateDmChatFlowAction({
     const usernameInput = playwrightPage
       .getByRole("dialog")
       .getByRole("textbox", { name: "ユーザー名" });
-    await usernameInput.pressSequentially("o6yq16leo");
+    await usernameInput.fill("o6yq16leo");
   } catch (err) {
     throw new Error("ユーザー名の入力に失敗しました", { cause: err });
   }
@@ -55,7 +58,7 @@ export async function calculateDmChatFlowAction({
     const passwordInput = playwrightPage
       .getByRole("dialog")
       .getByRole("textbox", { name: "パスワード" });
-    await passwordInput.pressSequentially("wsh-2026");
+    await passwordInput.fill("wsh-2026");
   } catch (err) {
     throw new Error("パスワードの入力に失敗しました", { cause: err });
   }
@@ -100,7 +103,7 @@ export async function calculateDmChatFlowAction({
     // 既存ユーザーを入力してDM開始
     try {
       const usernameInput = playwrightPage.getByRole("textbox", { name: "ユーザー名" });
-      await usernameInput.pressSequentially("g63iaxn5c");
+      await usernameInput.fill("g63iaxn5c");
     } catch (err) {
       throw new Error("DM相手のユーザー名の入力に失敗しました", { cause: err });
     }
