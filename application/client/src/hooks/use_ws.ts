@@ -29,15 +29,10 @@ export function useWs<T>(url: string, onMessage: (event: T) => void) {
       queueMicrotask(connect);
     };
 
-    if (document.readyState === "complete") {
-      scheduleConnect();
-    } else {
-      window.addEventListener("load", scheduleConnect, { once: true });
-    }
+    scheduleConnect();
 
     return () => {
       cancelled = true;
-      window.removeEventListener("load", scheduleConnect);
       if (ws !== null) {
         ws.removeEventListener("message", handleMessage);
         ws.close();

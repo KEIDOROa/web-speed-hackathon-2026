@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
 import { NewPostModalPage } from "@web-speed-hackathon-2026/client/src/components/new_post_modal/NewPostModalPage";
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export const NewPostModalContainer = ({ id }: Props) => {
+  const navigate = useNavigate();
   const dialogId = useId();
   const ref = useRef<HTMLDialogElement>(null);
   const [resetKey, setResetKey] = useState(0);
@@ -61,14 +63,14 @@ export const NewPostModalContainer = ({ id }: Props) => {
         setIsLoading(true);
         const post = await sendNewPost(params);
         ref.current?.close();
-        window.location.assign(`/posts/${post.id}`);
+        navigate(`/posts/${post.id}`);
       } catch {
         setHasError(true);
       } finally {
         setIsLoading(false);
       }
     },
-    [],
+    [navigate],
   );
 
   return (

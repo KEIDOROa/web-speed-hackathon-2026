@@ -145,7 +145,6 @@ export const AppContainer = () => {
     <HelmetProvider>
       <AppPage
         activeUser={activeUser}
-        authReady={authReady}
         authModalId={authModalId}
         newPostModalId={newPostModalId}
         onLogout={handleLogout}

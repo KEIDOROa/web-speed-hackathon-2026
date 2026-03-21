@@ -6,14 +6,14 @@ import { useInfiniteFetch } from "@web-speed-hackathon-2026/client/src/hooks/use
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 export const TimelineContainer = () => {
-  const { data: posts, fetchMore, isLoading, error } = useInfiniteFetch<Models.Post>(
+  const { data: posts, fetchMore, hasMore, isLoading, error } = useInfiniteFetch<Models.Post>(
     "/api/v1/posts",
     fetchJSON,
     { pageSize: 15 },
   );
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={posts}>
+    <InfiniteScroll fetchMore={fetchMore} hasMore={hasMore} items={posts}>
       <Helmet>
         <title>タイムライン - CaX</title>
       </Helmet>

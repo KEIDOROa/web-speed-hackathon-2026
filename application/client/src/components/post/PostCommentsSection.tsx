@@ -8,13 +8,13 @@ interface Props {
 }
 
 export const PostCommentsSection = ({ postId }: Props) => {
-  const { data: comments, fetchMore } = useInfiniteFetch<Models.Comment>(
+  const { data: comments, fetchMore, hasMore } = useInfiniteFetch<Models.Comment>(
     `/api/v1/posts/${postId}/comments`,
     fetchJSON,
   );
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={comments}>
+    <InfiniteScroll fetchMore={fetchMore} hasMore={hasMore} items={comments}>
       <CommentList comments={comments} />
     </InfiniteScroll>
   );

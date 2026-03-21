@@ -1,5 +1,5 @@
 import { MouseEventHandler, useCallback } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 import { formatLongDate, toISOString } from "@web-speed-hackathon-2026/client/src/utils/date";
 
@@ -49,6 +49,7 @@ export const TimelineItem = ({
   priorityMedia = false,
   contentVisibilityAuto = false,
 }: Props) => {
+  const navigate = useNavigate();
   const { ref: articleRef, inView: mediaInView } = useInView<HTMLElement>({
     rootMargin: "240px 0px 240px 0px",
     once: true,
@@ -64,10 +65,10 @@ export const TimelineItem = ({
     (ev) => {
       const isSelectedText = document.getSelection()?.isCollapsed === false;
       if (!isClickedAnchorOrButton(ev.target, ev.currentTarget) && !isSelectedText) {
-        window.location.assign(`/posts/${post.id}`);
+        navigate(`/posts/${post.id}`);
       }
     },
-    [post],
+    [navigate, post.id],
   );
 
   return (

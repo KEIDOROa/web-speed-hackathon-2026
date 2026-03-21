@@ -45,10 +45,9 @@ export function initialAuthFromBootstrap(): {
   if (raw?.status === "guest") {
     return { activeUser: null, authReady: true };
   }
-  // pending: use cached user for instant render
   const cached = getCachedUser();
   if (cached) {
     return { activeUser: cached, authReady: true };
   }
-  return { activeUser: null, authReady: false };
+  return { activeUser: null, authReady: true };
 }

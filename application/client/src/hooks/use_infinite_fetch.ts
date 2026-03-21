@@ -6,6 +6,7 @@ interface ReturnValues<T> {
   data: Array<T>;
   error: Error | null;
   isLoading: boolean;
+  hasMore: boolean;
   fetchMore: () => void;
 }
 
@@ -15,12 +16,13 @@ export function useInfiniteFetch<T>(
   options?: { pageSize?: number },
 ): ReturnValues<T> {
   const pageSize = options?.pageSize ?? DEFAULT_PAGE_SIZE;
-  const internalRef = useRef({ isLoading: false, offset: 0 });
+  const internalRef = useRef({ isLoading: false, offset: 0, hasMore: true });
 
   const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
     data: [],
     error: null,
     isLoading: Boolean(apiPath),
+    hasMore: true,
   });
 
   const fetchMore = useCallback(() => {
@@ -28,8 +30,8 @@ export function useInfiniteFetch<T>(
       return;
     }
 
-    const { isLoading, offset } = internalRef.current;
-    if (isLoading) {
+    const { isLoading, offset, hasMore } = internalRef.current;
+    if (isLoading || !hasMore) {
       return;
     }
 
@@ -40,6 +42,7 @@ export function useInfiniteFetch<T>(
     internalRef.current = {
       isLoading: true,
       offset,
+      hasMore,
     };
 
     const separator = apiPath.includes("?") ? "&" : "?";
@@ -47,15 +50,20 @@ export function useInfiniteFetch<T>(
 
     void fetcher(paginatedPath).then(
       (pageData) => {
+        const received = pageData.length;
+        const nextHasMore = received === pageSize;
+        const nextOffset = offset + received;
         const applySuccess = () => {
           setResult((cur) => ({
             ...cur,
             data: [...cur.data, ...pageData],
             isLoading: false,
+            hasMore: nextHasMore,
           }));
           internalRef.current = {
             isLoading: false,
-            offset: offset + pageSize,
+            offset: nextOffset,
+            hasMore: nextHasMore,
           };
         };
         if (offset === 0) {
@@ -74,6 +82,7 @@ export function useInfiniteFetch<T>(
           internalRef.current = {
             isLoading: false,
             offset,
+            hasMore,
           };
         });
       },
@@ -84,6 +93,7 @@ export function useInfiniteFetch<T>(
     internalRef.current = {
       isLoading: false,
       offset: 0,
+      hasMore: true,
     };
 
     if (!apiPath) {
@@ -91,6 +101,7 @@ export function useInfiniteFetch<T>(
         data: [],
         error: null,
         isLoading: false,
+        hasMore: false,
       });
       return;
     }
@@ -99,6 +110,7 @@ export function useInfiniteFetch<T>(
       data: [],
       error: null,
       isLoading: true,
+      hasMore: true,
     });
 
     fetchMore();

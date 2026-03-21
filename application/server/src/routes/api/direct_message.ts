@@ -1,6 +1,6 @@
 import { Router } from "express";
 import httpErrors from "http-errors";
-import { col, where, Op } from "sequelize";
+import { Op } from "sequelize";
 
 import { eventhub } from "@web-speed-hackathon-2026/server/src/eventhub";
 import {
@@ -16,20 +16,62 @@ directMessageRouter.get("/dm", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const conversations = await DirectMessageConversation.findAll({
+  const userId = req.session.userId;
+  const sequelize = DirectMessageConversation.sequelize!;
+
+  const conversations = await DirectMessageConversation.unscoped().findAll({
     where: {
       [Op.and]: [
-        { [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }] },
-        where(col("messages.id"), { [Op.not]: null }),
+        { [Op.or]: [{ initiatorId: userId }, { memberId: userId }] },
+        sequelize.literal(
+          `EXISTS (SELECT 1 FROM "DirectMessages" AS dm WHERE dm."conversationId" = "DirectMessageConversation"."id")`,
+        ),
       ],
     },
-    order: [[col("messages.createdAt"), "DESC"]],
+    include: [
+      { association: "initiator", include: [{ association: "profileImage" }] },
+      { association: "member", include: [{ association: "profileImage" }] },
+      {
+        model: DirectMessage.unscoped(),
+        as: "messages",
+        limit: 1,
+        separate: true,
+        order: [["createdAt", "DESC"]],
+        include: [
+          {
+            association: "sender",
+            include: [{ association: "profileImage" }],
+          },
+        ],
+      },
+    ],
   });
 
-  const sorted = conversations.map((c) => ({
-    ...c.toJSON(),
-    messages: c.messages?.reverse(),
-  }));
+  let unreadSet = new Set<string>();
+  if (conversations.length > 0) {
+    const unreadRows = await DirectMessage.unscoped().findAll({
+      attributes: ["conversationId"],
+      where: {
+        [Op.or]: conversations.map((c) => ({
+          conversationId: c.id,
+          senderId: c.initiatorId === userId ? c.memberId : c.initiatorId,
+          isRead: false,
+        })),
+      },
+    });
+    unreadSet = new Set(unreadRows.map((r) => r.conversationId));
+  }
+
+  const sorted = conversations
+    .map((c) => ({
+      ...c.toJSON(),
+      hasUnreadFromPeer: unreadSet.has(c.id),
+    }))
+    .sort((a, b) => {
+      const ta = a.messages?.[0]?.createdAt ?? "";
+      const tb = b.messages?.[0]?.createdAt ?? "";
+      return String(tb).localeCompare(String(ta));
+    });
 
   return res.status(200).type("application/json").send(sorted);
 });

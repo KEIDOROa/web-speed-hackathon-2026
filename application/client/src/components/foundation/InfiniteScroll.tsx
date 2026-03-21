@@ -1,56 +1,43 @@
-import { ReactNode, useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 
 interface Props {
   children: ReactNode;
-  items: any[];
+  items: unknown[];
   fetchMore: () => void;
+  hasMore?: boolean;
 }
 
-export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
-  const latestItemRef = useRef(items[items.length - 1]);
-  latestItemRef.current = items[items.length - 1];
+export const InfiniteScroll = ({ children, fetchMore, hasMore = true, items }: Props) => {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const fetchMoreRef = useRef(fetchMore);
+  fetchMoreRef.current = fetchMore;
 
-  const prevReachedRef = useRef(false);
-
-  const checkScroll = useCallback(() => {
-    const latestItem = latestItemRef.current;
-    const hasReached = window.innerHeight + Math.ceil(window.scrollY) >= document.body.offsetHeight;
-
-    if (!hasReached) {
-      prevReachedRef.current = false;
+  useEffect(() => {
+    if (!hasMore) {
+      return;
+    }
+    const el = sentinelRef.current;
+    if (el == null) {
       return;
     }
 
-    if (!prevReachedRef.current && latestItem !== undefined) {
-      fetchMore();
-      prevReachedRef.current = true;
-    }
-  }, [fetchMore]);
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          fetchMoreRef.current();
+        }
+      },
+      { root: null, rootMargin: "320px 0px", threshold: 0 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMore, items.length]);
 
-  useLayoutEffect(() => {
-    const hasReached = window.innerHeight + Math.ceil(window.scrollY) >= document.body.offsetHeight;
-    if (hasReached) {
-      prevReachedRef.current = false;
-    }
-    checkScroll();
-  }, [items.length, checkScroll]);
-
-  useEffect(() => {
-    const handler = () => {
-      checkScroll();
-    };
-
-    document.addEventListener("wheel", handler, { passive: true });
-    document.addEventListener("touchmove", handler, { passive: true });
-    window.addEventListener("resize", handler, { passive: true });
-    document.addEventListener("scroll", handler, { passive: true });
-    return () => {
-      document.removeEventListener("wheel", handler);
-      document.removeEventListener("touchmove", handler);
-      window.removeEventListener("resize", handler);
-      document.removeEventListener("scroll", handler);
-    };
-  }, [checkScroll]);
-
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      {hasMore ? <div ref={sentinelRef} aria-hidden className="h-px w-full shrink-0" /> : null}
+    </>
+  );
 };
