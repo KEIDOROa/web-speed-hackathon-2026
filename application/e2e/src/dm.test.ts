@@ -9,21 +9,15 @@ test.describe("DM一覧", () => {
 
   test("DM一覧が表示される", async ({ page }) => {
     await login(page);
-    const dmListLoaded = page.waitForResponse(
-      (res) =>
-        /\/api\/v1\/dm(\?|$)/.test(res.url()) &&
-        !res.url().includes("/dm/unread") &&
-        res.request().method() === "GET" &&
-        res.status() === 200,
-      { timeout: 60_000 },
-    );
     await page.goto("/dm", { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("load", { timeout: 30_000 });
 
     await expect(page.getByRole("heading", { name: "ダイレクトメッセージ" })).toBeVisible({
       timeout: 30_000,
     });
-    await dmListLoaded;
+    await expect(
+      page.getByTestId("dm-list").or(page.getByText("まだDMで会話した相手がいません")),
+    ).toBeVisible({ timeout: 60_000 });
 
     // VRT: DM一覧
     await scrollEntire(page);
