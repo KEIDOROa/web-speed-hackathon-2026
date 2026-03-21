@@ -180,7 +180,8 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
           className="block h-full w-full object-cover"
         />
         <button
-          aria-label={isPlaying ? "一時停止" : "再生"}
+          aria-label="動画プレイヤー"
+          aria-pressed={isPlaying}
           className="absolute inset-0 z-10 block h-full w-full cursor-pointer border-0 bg-transparent p-0"
           type="button"
           onClick={handleToggle}
