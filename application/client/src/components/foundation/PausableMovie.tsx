@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { GifReader } from "omggif";
 
 import { AspectRatioBox } from "@web-speed-hackathon-2026/client/src/components/foundation/AspectRatioBox";
 
@@ -9,19 +10,87 @@ interface Props {
   priority?: boolean;
 }
 
-/**
- * GIF動画を <img> で表示し、クリックで一時停止・再生を切り替えます。
- * img は常に表示・再生し続け、一時停止時は canvas を上に重ねて静止表示します。
- */
+interface DecodedFrame {
+  imageData: ImageData;
+  delay: number; // ms
+}
+
+function decodeGifFrames(buffer: ArrayBuffer): { width: number; height: number; frames: DecodedFrame[] } {
+  const reader = new GifReader(new Uint8Array(buffer) as Buffer);
+  const width = reader.width;
+  const height = reader.height;
+  const frames: DecodedFrame[] = [];
+
+  // フルフレームを合成するための canvas
+  const compCanvas = document.createElement("canvas");
+  compCanvas.width = width;
+  compCanvas.height = height;
+  const compCtx = compCanvas.getContext("2d")!;
+
+  for (let i = 0; i < reader.numFrames(); i++) {
+    const info = reader.frameInfo(i);
+    const pixels = new Uint8ClampedArray(width * height * 4);
+    reader.decodeAndBlitFrameRGBA(i, pixels);
+
+    // フレームのピクセルを合成用 canvas に描画
+    const frameImageData = new ImageData(pixels, width, height);
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width = width;
+    tmpCanvas.height = height;
+    const tmpCtx = tmpCanvas.getContext("2d")!;
+    tmpCtx.putImageData(frameImageData, 0, 0);
+
+    // disposal=2 の前フレームなら背景クリア済みなので、そのまま上書き
+    compCtx.drawImage(tmpCanvas, 0, 0);
+
+    // 合成結果をスナップショットとして保存
+    const composited = compCtx.getImageData(0, 0, width, height);
+    frames.push({
+      imageData: composited,
+      delay: Math.max(info.delay * 10, 20), // delay は 1/100秒単位、最低20ms
+    });
+
+    // disposal 処理
+    if (info.disposal === 2) {
+      compCtx.clearRect(info.x, info.y, info.width, info.height);
+    }
+  }
+
+  return { width, height, frames };
+}
+
 export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _priority }: Props) => {
-  const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const blobUrlRef = useRef<string | null>(null);
+  const animStateRef = useRef<{
+    frames: DecodedFrame[];
+    frameIndex: number;
+    playing: boolean;
+    timerId: ReturnType<typeof setTimeout> | null;
+    width: number;
+    height: number;
+  } | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+
+    const renderFrame = () => {
+      const state = animStateRef.current;
+      const canvas = canvasRef.current;
+      if (!state || !canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.putImageData(state.frames[state.frameIndex]!.imageData, 0, 0);
+
+      if (state.playing) {
+        const delay = state.frames[state.frameIndex]!.delay;
+        state.frameIndex = (state.frameIndex + 1) % state.frames.length;
+        state.timerId = setTimeout(renderFrame, delay);
+      }
+    };
 
     void (async () => {
       try {
@@ -30,73 +99,86 @@ export const PausableMovie = ({ src, srcSet: _srcSet, sizes: _sizes, priority: _
           headers: { Accept: "image/gif" },
         });
         if (!res.ok) return;
-        const blob = await res.blob();
+        const buffer = await res.arrayBuffer();
         if (cancelled) return;
 
-        const blobUrl = URL.createObjectURL(blob);
-        blobUrlRef.current = blobUrl;
+        const { width, height, frames } = decodeGifFrames(buffer);
+        if (cancelled || frames.length === 0) return;
 
-        const img = imgRef.current;
-        if (img) {
-          img.src = blobUrl;
-        }
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        canvas.width = width;
+        canvas.height = height;
+
+        animStateRef.current = {
+          frames,
+          frameIndex: 0,
+          playing: true,
+          timerId: null,
+          width,
+          height,
+        };
+
+        setIsLoaded(true);
+        renderFrame();
       } catch {
-        /* fetch 失敗時は何もしない */
+        /* GIF デコード失敗時は何もしない */
       }
     })();
 
     return () => {
       cancelled = true;
-      if (blobUrlRef.current) {
-        URL.revokeObjectURL(blobUrlRef.current);
-        blobUrlRef.current = null;
+      const state = animStateRef.current;
+      if (state?.timerId != null) {
+        clearTimeout(state.timerId);
       }
+      animStateRef.current = null;
     };
   }, [src]);
 
   const handleToggle = useCallback(() => {
-    const img = imgRef.current;
+    const state = animStateRef.current;
     const canvas = canvasRef.current;
-    if (!img || !canvas) return;
+    if (!state || !canvas) return;
 
-    if (isPlaying) {
-      // 一時停止: createImageBitmap で現在表示中のフレームを確実にキャプチャ
-      void createImageBitmap(img).then((bitmap) => {
-        const c = canvasRef.current;
-        if (!c) { bitmap.close(); return; }
-        c.width = bitmap.width;
-        c.height = bitmap.height;
-        const ctx = c.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(bitmap, 0, 0);
-        }
-        bitmap.close();
-        setIsPlaying(false);
-      });
-      return;
+    if (state.playing) {
+      // 停止: タイマーを止める。canvas には現在のフレームが表示されたまま
+      state.playing = false;
+      if (state.timerId != null) {
+        clearTimeout(state.timerId);
+        state.timerId = null;
+      }
+      setIsPlaying(false);
     } else {
-      // 再生: canvas を非表示にするだけ（img は裏で再生し続けている）
+      // 再生: 現在のフレームから続行
+      state.playing = true;
+      const delay = state.frames[state.frameIndex]!.delay;
+      state.frameIndex = (state.frameIndex + 1) % state.frames.length;
+      const renderFrame = () => {
+        const s = animStateRef.current;
+        const c = canvasRef.current;
+        if (!s || !c || !s.playing) return;
+
+        const ctx = c.getContext("2d");
+        if (!ctx) return;
+
+        ctx.putImageData(s.frames[s.frameIndex]!.imageData, 0, 0);
+        const d = s.frames[s.frameIndex]!.delay;
+        s.frameIndex = (s.frameIndex + 1) % s.frames.length;
+        s.timerId = setTimeout(renderFrame, d);
+      };
+      state.timerId = setTimeout(renderFrame, delay);
       setIsPlaying(true);
     }
-  }, [isPlaying]);
+  }, []);
 
   return (
     <AspectRatioBox aspectHeight={1} aspectWidth={1}>
       <div className="group relative block h-full w-full">
-        {/* img は常に表示。GIFアニメーションが途切れないようにする */}
-        <img
-          ref={imgRef}
+        <canvas
+          ref={canvasRef}
           className="block h-full w-full object-cover"
-          onLoad={() => setIsLoaded(true)}
-          alt=""
         />
-        {/* 一時停止時のみ canvas を上に重ねて静止フレームを表示 */}
-        {!isPlaying && (
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 block h-full w-full object-cover"
-          />
-        )}
         <button
           aria-label={isPlaying ? "一時停止" : "再生"}
           className="absolute inset-0 z-10 block h-full w-full cursor-pointer border-0 bg-transparent p-0"
