@@ -4,11 +4,16 @@ import { defineConfig, devices } from "@playwright/test";
 
 const BASE_URL = process.env["E2E_BASE_URL"] ?? "http://localhost:3000";
 
-// PCスペックやチューニングの進み具合によってテストの安定性が変わるため、E2E_WORKERSの数を調整しながら利用してください
-// デフォルトでは、論理CPUの数の半分を利用します
-const WORKERS = process.env["E2E_WORKERS"]
-  ? Number(process.env["E2E_WORKERS"])
-  : Math.max(1, Math.floor(os.cpus().length / 2));
+// --- 並列ワーカー（主にここを読み・環境変数で調整）---
+// ・タイムアウトや VRT のブレが出る → E2E_WORKERS=1 で逐次実行にすると安定しやすい
+// ・CPU に余裕があり短縮したい → E2E_WORKERS=4 など明示（未指定時は論理 CPU の半分、最低 1）
+const DEFAULT_PARALLEL_WORKERS = Math.max(1, Math.floor(os.cpus().length / 2));
+const envWorkerOverride = process.env["E2E_WORKERS"];
+const parsedWorkers = envWorkerOverride !== undefined ? Number(envWorkerOverride) : NaN;
+const WORKERS =
+  Number.isFinite(parsedWorkers) && parsedWorkers >= 1
+    ? Math.floor(parsedWorkers)
+    : DEFAULT_PARALLEL_WORKERS;
 
 export default defineConfig({
   globalSetup: "./globalSetup.ts",
