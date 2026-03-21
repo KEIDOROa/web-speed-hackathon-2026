@@ -5,9 +5,15 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
+
+  body {
+    @apply font-sans antialiased;
+  }
 }
 
 @theme {
+  --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: "Noto Sans Mono", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
   --color-cax-canvas: var(--color-stone-100);
   --color-cax-surface: var(--color-white);
   --color-cax-surface-raised: var(--color-white);

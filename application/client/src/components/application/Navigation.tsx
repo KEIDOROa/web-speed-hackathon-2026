@@ -1,9 +1,17 @@
+import { lazy, Suspense } from "react";
+
 import { AccountMenu } from "@web-speed-hackathon-2026/client/src/components/application/AccountMenu";
 import { NavigationItem } from "@web-speed-hackathon-2026/client/src/components/application/NavigationItem";
-import { DirectMessageNotificationBadge } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageNotificationBadge";
 import { CrokLogo } from "@web-speed-hackathon-2026/client/src/components/foundation/CrokLogo";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { getCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
+
+const DirectMessageNotificationBadgeLazy = lazy(() =>
+  import(
+    /* webpackChunkName: "dm-badge" */
+    "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageNotificationBadge"
+  ).then((m) => ({ default: m.DirectMessageNotificationBadge })),
+);
 
 interface Props {
   activeUser: Models.User | null;
@@ -63,7 +71,11 @@ export const Navigation = ({
           ) : null}
           {authReady && activeUser !== null ? (
             <NavigationItem
-              badge={<DirectMessageNotificationBadge />}
+              badge={
+                <Suspense fallback={null}>
+                  <DirectMessageNotificationBadgeLazy />
+                </Suspense>
+              }
               href="/dm"
               icon={<FontAwesomeIcon iconType="envelope" styleType="solid" />}
               text="DM"

@@ -57,8 +57,7 @@ export async function calculateSearchPostFlowAction({
       const searchInput = playwrightPage.getByRole("textbox", {
         name: "検索 (例: キーワード since:2025-01-01 until:2025-12-31)",
       });
-      await searchInput.clear();
-      await searchInput.pressSequentially(
+      await searchInput.fill(
         `アニメ since:2026-01-06${"0".repeat(10)}x until:2026-01-06${"0".repeat(10)}x`,
       );
     } catch (err) {

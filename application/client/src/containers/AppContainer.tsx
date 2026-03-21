@@ -3,6 +3,8 @@ import { HelmetProvider } from "react-helmet";
 import { Route, Routes, useLocation, useNavigate } from "react-router";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
+<<<<<<< HEAD
+=======
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { CrokContainer } from "@web-speed-hackathon-2026/client/src/containers/CrokContainer";
 import { DirectMessageContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer";
@@ -10,14 +12,57 @@ import { DirectMessageListContainer } from "@web-speed-hackathon-2026/client/src
 import { PostContainer } from "@web-speed-hackathon-2026/client/src/containers/PostContainer";
 import { SearchContainer } from "@web-speed-hackathon-2026/client/src/containers/SearchContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
+>>>>>>> parent of 2a03d24 (軽量化)
 import { initialAuthFromBootstrap, setCachedUser, clearCachedUser } from "@web-speed-hackathon-2026/client/src/utils/bootstrap_auth";
 import { clearAuthHintOnClient } from "@web-speed-hackathon-2026/client/src/utils/auth_hint";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 const NotFoundContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/NotFoundContainer").then(m => ({ default: m.NotFoundContainer })));
 const NewPostModalContainer = lazy(() => import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then(m => ({ default: m.NewPostModalContainer })));
+<<<<<<< HEAD
+const CrokContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then(m => ({ default: m.CrokContainer })),
+);
+const DirectMessageContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then(m => ({
+    default: m.DirectMessageContainer,
+  })),
+);
+const DirectMessageListContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then(m => ({
+    default: m.DirectMessageListContainer,
+  })),
+);
+const PostContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/PostContainer").then(m => ({ default: m.PostContainer })),
+);
+const SearchContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/SearchContainer").then(m => ({ default: m.SearchContainer })),
+);
+const UserProfileContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer })),
+);
+const TermContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/TermContainer").then(m => ({ default: m.TermContainer })),
+);
+const TimelineContainer = lazy(() =>
+  import(
+    /* webpackChunkName: "timeline" */
+    /* webpackPreload: true */
+    "@web-speed-hackathon-2026/client/src/containers/TimelineContainer"
+  ).then((m) => ({ default: m.TimelineContainer })),
+);
+const AuthModalContainer = lazy(() =>
+  import(
+    /* webpackChunkName: "auth-modal" */
+    /* webpackPrefetch: true */
+    "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer"
+  ).then((m) => ({ default: m.AuthModalContainer })),
+);
+=======
 const UserProfileContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer })));
 const TermContainer = lazy(() => import(/* webpackPrefetch: true */ "@web-speed-hackathon-2026/client/src/containers/TermContainer").then(m => ({ default: m.TermContainer })));
+>>>>>>> parent of 2a03d24 (軽量化)
 const LoadingFallback = () => (
   <div className="p-4">
     <p className="text-cax-text-muted text-2xl">読み込み中...</p>
@@ -59,6 +104,10 @@ export const AppContainer = () => {
   }, []);
 
   useEffect(() => {
+    const bootstrap = (window as unknown as { __BOOTSTRAP_ME__?: { status: string } }).__BOOTSTRAP_ME__;
+    if (bootstrap?.status === "ok" || bootstrap?.status === "guest") {
+      return;
+    }
     const snapshot = bootstrapMeGenerationRef.current;
     void fetchJSON<Models.User>("/api/v1/me")
       .then((user) => {
@@ -151,7 +200,9 @@ export const AppContainer = () => {
         </Suspense>
       </AppPage>
 
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={handleAuthSuccessUser} />
+      <Suspense fallback={null}>
+        <AuthModalContainer id={authModalId} onUpdateActiveUser={handleAuthSuccessUser} />
+      </Suspense>
       <Suspense fallback={null}>
         <NewPostModalContainer id={newPostModalId} />
       </Suspense>

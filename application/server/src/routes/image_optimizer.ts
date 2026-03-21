@@ -36,11 +36,10 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
     }
 
     const acceptHeader = req.headers.accept || "";
-    const supportsAvif = acceptHeader.includes("image/avif");
     const supportsWebp = acceptHeader.includes("image/webp");
 
-    const format = supportsAvif ? "avif" : supportsWebp ? "webp" : "jpeg";
-    const contentType = supportsAvif ? "image/avif" : supportsWebp ? "image/webp" : "image/jpeg";
+    const format = supportsWebp ? "webp" : "jpeg";
+    const contentType = supportsWebp ? "image/webp" : "image/jpeg";
 
     const isProfile = reqPath.includes("/profiles/");
     const wQuery = req.query["w"];
@@ -72,9 +71,7 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
     let pipeline = sharp(filePath).resize({ width: maxWidth, withoutEnlargement: true });
 
     const compact = maxWidth <= 480;
-    if (format === "avif") {
-      pipeline = pipeline.avif({ quality: compact ? 52 : 58 });
-    } else if (format === "webp") {
+    if (format === "webp") {
       pipeline = pipeline.webp({ quality: compact ? 68 : 74 });
     } else {
       pipeline = pipeline.jpeg({ quality: compact ? 68 : 74, mozjpeg: true });
@@ -96,9 +93,9 @@ imageOptimizerRouter.get("/images/{*path}", async (req, res, next) => {
 async function transcodeMovie(
   filePath: string,
   maxWidth: number,
-  preferWebp: boolean,
+  acceptHeader: string,
 ): Promise<{ buffer: Buffer; contentType: string; cacheVariant: "webp" | "gif" }> {
-  const pipeline = () =>
+  const basePipeline = () =>
     sharp(filePath, { animated: true, limitInputPixels: false }).resize({
       width: maxWidth,
       height: maxWidth,
@@ -106,16 +103,21 @@ async function transcodeMovie(
       withoutEnlargement: true,
     });
 
+  const compact = maxWidth <= 360;
+  const preferWebp = acceptHeader.includes("image/webp");
+
   if (preferWebp) {
     try {
-      const buffer = await pipeline().webp({ quality: 50, effort: 4 }).toBuffer();
+      const buffer = await basePipeline()
+        .webp({ quality: compact ? 44 : 50, effort: 4 })
+        .toBuffer();
       return { buffer, contentType: "image/webp", cacheVariant: "webp" };
     } catch {
-      // アニメ WebP 化に失敗した場合は GIF にフォールバック
+      /* アニメ WebP 化に失敗した場合は GIF にフォールバック */
     }
   }
 
-  const buffer = await pipeline().gif({ effort: 4, colours: 128 }).toBuffer();
+  const buffer = await basePipeline().gif({ effort: 4, colours: 128 }).toBuffer();
   return { buffer, contentType: "image/gif", cacheVariant: "gif" };
 }
 
@@ -149,26 +151,18 @@ imageOptimizerRouter.get("/movies/{*path}", async (req, res, next) => {
       res.send(entry.buffer);
     };
 
-    if (preferWebp) {
-      const webpKey = `${reqPath}:movie:webp:${maxWidth}`;
-      const webpHit = cache.get(webpKey);
-      if (webpHit) {
-        sendCached(webpHit);
-        return;
-      }
-    }
-
-    const gifKey = `${reqPath}:movie:gif:${maxWidth}`;
-    const gifHit = cache.get(gifKey);
-    if (gifHit) {
-      sendCached(gifHit);
+    const desiredVariant: "webp" | "gif" = preferWebp ? "webp" : "gif";
+    const desiredKey = `${reqPath}:movie:${desiredVariant}:${maxWidth}`;
+    const desiredHit = cache.get(desiredKey);
+    if (desiredHit) {
+      sendCached(desiredHit);
       return;
     }
 
     const { buffer, contentType, cacheVariant } = await transcodeMovie(
       filePath,
       maxWidth,
-      preferWebp,
+      acceptHeader,
     );
 
     const storeKey = `${reqPath}:movie:${cacheVariant}:${maxWidth}`;

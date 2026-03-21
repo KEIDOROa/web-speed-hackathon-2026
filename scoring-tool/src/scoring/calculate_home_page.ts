@@ -35,7 +35,18 @@ export async function calculateHomePage({ baseUrl, playwrightPage, puppeteerPage
     steps: [result],
   } = await flow.createFlowResult();
 
-  const { breakdown, scoreX100 } = calculateHackathonScore(result!.lhr.audits, {
+  const audits = result!.lhr.audits;
+  const lcpAudit = audits["largest-contentful-paint"];
+  const tbtAudit = audits["total-blocking-time"];
+  // eslint-disable-next-line no-console -- 開発用: Lighthouse の LCP/TBT numericValue（ms）
+  console.log("[dev:ホーム] largest-contentful-paint / total-blocking-time", {
+    lcpMs: lcpAudit?.numericValue,
+    lcpDisplay: lcpAudit?.displayValue,
+    tbtMs: tbtAudit?.numericValue,
+    tbtDisplay: tbtAudit?.displayValue,
+  });
+
+  const { breakdown, scoreX100 } = calculateHackathonScore(audits, {
     isUserflow: false,
   });
 

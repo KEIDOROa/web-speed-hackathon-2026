@@ -7,7 +7,8 @@ interface Props {
 }
 
 export const MovieArea = ({ movie, priority = false }: Props) => {
-  const { src, srcSet, sizes } = buildMovieResponsive(movie.id);
+  const { src, srcSet, sizes } = buildMovieResponsive(movie.id, { feed: !priority });
+
   return (
     <div
       className="border-cax-border bg-cax-surface-subtle relative h-full w-full overflow-hidden rounded-lg border"

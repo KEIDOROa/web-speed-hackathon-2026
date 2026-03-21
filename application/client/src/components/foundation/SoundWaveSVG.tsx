@@ -75,13 +75,37 @@ export const SoundWaveSVG = ({ soundData, playedRatio = 0 }: Props) => {
 
   useEffect(() => {
     setModel({ peaks: [], decodeSettled: false });
-    void calculate(soundData)
-      .then(({ peaks: p }) => {
-        setModel({ peaks: p, decodeSettled: true });
-      })
-      .catch(() => {
-        setModel({ peaks: [], decodeSettled: true });
-      });
+    let cancelled = false;
+    const run = () => {
+      if (cancelled) {
+        return;
+      }
+      void calculate(soundData)
+        .then(({ peaks: p }) => {
+          if (!cancelled) {
+            setModel({ peaks: p, decodeSettled: true });
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setModel({ peaks: [], decodeSettled: true });
+          }
+        });
+    };
+    const ric =
+      typeof requestIdleCallback !== "undefined"
+        ? requestIdleCallback(run, { timeout: 2500 })
+        : null;
+    const tid = ric === null ? window.setTimeout(run, 0) : null;
+    return () => {
+      cancelled = true;
+      if (ric !== null) {
+        cancelIdleCallback(ric);
+      }
+      if (tid !== null) {
+        clearTimeout(tid);
+      }
+    };
   }, [soundData]);
 
   const displayPeaks = peaks.length > 0 ? peaks : skeletonHeights(PEAK_BAR_COUNT);

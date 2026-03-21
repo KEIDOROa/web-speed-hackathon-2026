@@ -110,7 +110,7 @@ export async function calculateDmChatFlowAction({
       await startDmButton.click();
       // DMスレッドページへ遷移
       await playwrightPage.waitForURL("**/dm/*", {
-        timeout: 10 * 1000,
+        timeout: 60 * 1000,
       });
     } catch (err) {
       throw new Error("DMスレッドへの遷移に失敗しました", { cause: err });

@@ -36,10 +36,28 @@ const PostContainerContent = ({ postId }: { postId: string | undefined }) => {
     return <NotFoundContainer />;
   }
 
+  const firstImageId = post.images?.[0]?.id;
+  const movieId = post.movie?.id;
+  const profileId = post.user.profileImage?.id;
+
   return (
     <InfiniteScroll fetchMore={fetchMore} items={comments}>
       <Helmet>
         <title>{post.user.name} さんのつぶやき - CaX</title>
+        {firstImageId ? (
+          <link rel="preload" as="image" href={`/images/${firstImageId}.jpg?w=640`} fetchPriority="high" />
+        ) : null}
+        {!firstImageId && movieId ? (
+          <link rel="preload" as="image" href={`/movies/${movieId}.gif?w=480`} fetchPriority="high" />
+        ) : null}
+        {profileId ? (
+          <link
+            rel="preload"
+            as="image"
+            href={`/images/profiles/${profileId}.jpg?w=96`}
+            fetchPriority={firstImageId || movieId ? "auto" : "high"}
+          />
+        ) : null}
       </Helmet>
       <PostPage comments={comments} post={post} />
     </InfiniteScroll>

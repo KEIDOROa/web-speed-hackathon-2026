@@ -7,12 +7,18 @@ import { ImageArea } from "@web-speed-hackathon-2026/client/src/components/post/
 import { MovieArea } from "@web-speed-hackathon-2026/client/src/components/post/MovieArea";
 import { SoundArea } from "@web-speed-hackathon-2026/client/src/components/post/SoundArea";
 import { TranslatableText } from "@web-speed-hackathon-2026/client/src/components/post/TranslatableText";
+import {
+  ImageAreaSkeleton,
+  MovieAreaSkeleton,
+  SoundAreaSkeleton,
+} from "@web-speed-hackathon-2026/client/src/components/timeline/TimelineMediaSkeleton";
+import { useInView } from "@web-speed-hackathon-2026/client/src/hooks/use_in_view";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Element): boolean => {
   while (target !== null && target instanceof Element) {
     const tagName = target.tagName.toLowerCase();
-    if (["a"].includes(tagName)) {
+    if (["a", "button"].includes(tagName)) {
       return true;
     }
     if (currentTarget === target) {
@@ -29,10 +35,28 @@ const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Elem
  */
 interface Props {
   post: Models.Post;
-  priority?: boolean;
+  /** 先頭行のアバター・LCP を早める */
+  priorityAvatar?: boolean;
+  /** フィード内で最初に現れる画像・動画 */
+  priorityMedia?: boolean;
+  /** 折りたたみ下の行のみ。レイアウト・描画コストを抑える */
+  contentVisibilityAuto?: boolean;
 }
 
-export const TimelineItem = ({ post, priority = false }: Props) => {
+export const TimelineItem = ({
+  post,
+  priorityAvatar = false,
+  priorityMedia = false,
+  contentVisibilityAuto = false,
+}: Props) => {
+  const { ref: articleRef, inView: mediaInView } = useInView<HTMLArticleElement>({
+    rootMargin: "240px 0px 240px 0px",
+    once: true,
+  });
+
+  const loadHeavyMedia = priorityMedia || mediaInView;
+  const mediaPriority = priorityMedia && loadHeavyMedia;
+
   /**
    * ボタンやリンク以外の箇所をクリックしたとき かつ 文字が選択されてないとき、投稿詳細ページに遷移する
    */
@@ -47,7 +71,16 @@ export const TimelineItem = ({ post, priority = false }: Props) => {
   );
 
   return (
-    <article className="hover:bg-cax-surface-subtle px-1 sm:px-4" onClick={handleClick}>
+    <article
+      ref={articleRef}
+      className="hover:bg-cax-surface-subtle px-1 sm:px-4"
+      onClick={handleClick}
+      style={
+        contentVisibilityAuto
+          ? { contentVisibility: "auto", containIntrinsicSize: "auto 280px" }
+          : undefined
+      }
+    >
       <div className="border-cax-border flex border-b px-2 pt-2 pb-4 sm:px-4">
         <div className="shrink-0 grow-0 pr-2 sm:pr-4">
           <Link
@@ -58,9 +91,9 @@ export const TimelineItem = ({ post, priority = false }: Props) => {
             <img
               alt={post.user.profileImage.alt || `${post.user.name}のプロフィール画像`}
               src={getProfileImagePath(post.user.profileImage.id, 96)}
-              loading={priority ? "eager" : "lazy"}
+              loading={priorityAvatar ? "eager" : "lazy"}
               decoding="async"
-              fetchPriority={priority ? "high" : "auto"}
+              fetchPriority={priorityAvatar ? "high" : "auto"}
               width={64}
               height={64}
             />
@@ -92,20 +125,28 @@ export const TimelineItem = ({ post, priority = false }: Props) => {
           </div>
           {post.images?.length > 0 ? (
             <div className="relative mt-2 w-full">
-              <ImageArea images={post.images} priority={priority} />
+              {loadHeavyMedia ? (
+                <ImageArea images={post.images} priority={mediaPriority} />
+              ) : (
+                <ImageAreaSkeleton count={post.images.length} />
+              )}
             </div>
           ) : null}
           {post.movie ? (
             <div className="relative mt-2 w-full">
-              <MovieArea
-                movie={post.movie}
-                priority={priority && (post.images?.length ?? 0) === 0}
-              />
+              {loadHeavyMedia ? (
+                <MovieArea
+                  movie={post.movie}
+                  priority={mediaPriority && (post.images?.length ?? 0) === 0}
+                />
+              ) : (
+                <MovieAreaSkeleton />
+              )}
             </div>
           ) : null}
           {post.sound ? (
             <div className="relative mt-2 w-full">
-              <SoundArea sound={post.sound} />
+              {loadHeavyMedia ? <SoundArea sound={post.sound} /> : <SoundAreaSkeleton />}
             </div>
           ) : null}
         </div>

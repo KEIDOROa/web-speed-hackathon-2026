@@ -8,8 +8,17 @@ export function getImagePath(imageId: string): string {
   return `/images/${imageId}.jpg`;
 }
 
-export function buildPostImageResponsive(imageId: string): { src: string; srcSet: string } {
+const FEED_POST_IMAGE_WIDTHS = [280, 360, 480] as const;
+
+export function buildPostImageResponsive(
+  imageId: string,
+  options?: { feed?: boolean },
+): { src: string; srcSet: string } {
   const base = `/images/${imageId}.jpg`;
+  if (options?.feed) {
+    const srcSet = FEED_POST_IMAGE_WIDTHS.map((w) => `${base}?w=${w} ${w}w`).join(", ");
+    return { src: `${base}?w=280`, srcSet };
+  }
   const srcSet = POST_IMAGE_SRCSET_WIDTHS.map((w) => `${base}?w=${w} ${w}w`).join(", ");
   return { src: `${base}?w=480`, srcSet };
 }
@@ -27,14 +36,18 @@ export function getMoviePath(movieId: string): string {
   return `/movies/${movieId}.gif`;
 }
 
-export function buildMovieResponsive(movieId: string): {
+export function buildMovieResponsive(
+  movieId: string,
+  options?: { feed?: boolean },
+): {
   src: string;
   srcSet: string;
   sizes: string;
 } {
   const base = getMoviePath(movieId);
   const srcSet = MOVIE_SRCSET_WIDTHS.map((w) => `${base}?w=${w} ${w}w`).join(", ");
-  return { src: `${base}?w=480`, srcSet, sizes: MOVIE_IMAGE_SIZES };
+  const defaultW = options?.feed ? 280 : 480;
+  return { src: `${base}?w=${defaultW}`, srcSet, sizes: MOVIE_IMAGE_SIZES };
 }
 
 export function getSoundPath(soundId: string): string {

@@ -7,15 +7,20 @@ import { buildPostImageResponsive } from "@web-speed-hackathon-2026/client/src/u
 interface Props {
   imageId: string;
   priority?: boolean;
+  /** タイムライン等。解像度を抑えて LCP/TBT に効かせる */
+  feedOptimize?: boolean;
   sizes: string;
 }
 
 /**
  * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します
  */
-export const CoveredImage = ({ imageId, priority = false, sizes }: Props) => {
+export const CoveredImage = ({ imageId, priority = false, feedOptimize = false, sizes }: Props) => {
   const dialogId = useId();
-  const { src, srcSet } = useMemo(() => buildPostImageResponsive(imageId), [imageId]);
+  const { src, srcSet } = useMemo(
+    () => buildPostImageResponsive(imageId, { feed: feedOptimize }),
+    [imageId, feedOptimize],
+  );
 
   const handleDialogClick = useCallback((ev: MouseEvent<HTMLDialogElement>) => {
     ev.stopPropagation();

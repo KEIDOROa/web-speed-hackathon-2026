@@ -34,6 +34,29 @@ class InlineCssPlugin {
   }
 }
 
+/** エントリで読み込む script に対応する preload を head に差し込み、LCP/TBT 改善を狙う */
+class ScriptPreloadPlugin {
+  apply(compiler) {
+    compiler.hooks.compilation.tap("ScriptPreloadPlugin", (compilation) => {
+      HtmlWebpackPlugin.getHooks(compilation).beforeEmit.tapAsync(
+        "ScriptPreloadPlugin",
+        (data, cb) => {
+          const scriptSrcRegex = /<script[^>]+src="([^"]+\.js)"[^>]*><\/script>/g;
+          const preloads = [];
+          let match;
+          while ((match = scriptSrcRegex.exec(data.html)) !== null) {
+            preloads.push(`<link rel="preload" href="${match[1]}" as="script" />`);
+          }
+          if (preloads.length > 0) {
+            data.html = data.html.replace(/<head>/i, `<head>\n${preloads.join("\n")}\n`);
+          }
+          cb(null, data);
+        },
+      );
+    });
+  }
+}
+
 const SRC_PATH = path.resolve(__dirname, "./src");
 const PUBLIC_PATH = path.resolve(__dirname, "../public");
 const UPLOAD_PATH = path.resolve(__dirname, "../upload");
@@ -130,6 +153,7 @@ const config = {
       template: path.resolve(SRC_PATH, "./index.html"),
       scriptLoading: "defer",
     }),
+    new ScriptPreloadPlugin(),
     ...(isProduction ? [new InlineCssPlugin()] : []),
   ],
   resolve: {

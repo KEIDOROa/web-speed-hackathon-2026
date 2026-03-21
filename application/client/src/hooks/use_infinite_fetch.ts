@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 
-const LIMIT = 30;
+const DEFAULT_PAGE_SIZE = 30;
 
 interface ReturnValues<T> {
   data: Array<T>;
@@ -12,7 +12,9 @@ interface ReturnValues<T> {
 export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
+  options?: { pageSize?: number },
 ): ReturnValues<T> {
+  const pageSize = options?.pageSize ?? DEFAULT_PAGE_SIZE;
   const internalRef = useRef({ isLoading: false, offset: 0 });
 
   const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
@@ -41,33 +43,42 @@ export function useInfiniteFetch<T>(
     };
 
     const separator = apiPath.includes("?") ? "&" : "?";
-    const paginatedPath = `${apiPath}${separator}limit=${LIMIT}&offset=${offset}`;
+    const paginatedPath = `${apiPath}${separator}limit=${pageSize}&offset=${offset}`;
 
     void fetcher(paginatedPath).then(
       (pageData) => {
-        setResult((cur) => ({
-          ...cur,
-          data: [...cur.data, ...pageData],
-          isLoading: false,
-        }));
-        internalRef.current = {
-          isLoading: false,
-          offset: offset + LIMIT,
+        const applySuccess = () => {
+          setResult((cur) => ({
+            ...cur,
+            data: [...cur.data, ...pageData],
+            isLoading: false,
+          }));
+          internalRef.current = {
+            isLoading: false,
+            offset: offset + pageSize,
+          };
         };
+        if (offset === 0) {
+          applySuccess();
+        } else {
+          startTransition(applySuccess);
+        }
       },
       (error) => {
-        setResult((cur) => ({
-          ...cur,
-          error,
-          isLoading: false,
-        }));
-        internalRef.current = {
-          isLoading: false,
-          offset,
-        };
+        startTransition(() => {
+          setResult((cur) => ({
+            ...cur,
+            error,
+            isLoading: false,
+          }));
+          internalRef.current = {
+            isLoading: false,
+            offset,
+          };
+        });
       },
     );
-  }, [apiPath, fetcher]);
+  }, [apiPath, fetcher, pageSize]);
 
   useEffect(() => {
     internalRef.current = {

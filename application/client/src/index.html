@@ -8,95 +8,186 @@
       content="CaX（カックス）はつぶやきや写真・動画・音声の投稿、検索、ダイレクトメッセージ、AIチャット（Crok）などが利用できるソーシャルサービスです。"
     />
     <title>CaX</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+      }
+      body {
+        min-height: 100vh;
+        background: #f5f5f4;
+        color: #042f2e;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Mono:wght@400;700&display=swap"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Mono:wght@400;700&display=swap"
+      />
+    </noscript>
   </head>
   <body class="bg-cax-canvas text-cax-text">
-    <script>
-      window.__PREFETCH__ = {};
-      function fetchWithTimeout(url, ms) {
-        var ctrl = new AbortController();
-        var tid = setTimeout(function() { ctrl.abort(); }, ms);
-        return fetch(url, { signal: ctrl.signal, credentials: "same-origin" }).then(function(r) {
-          clearTimeout(tid);
-          return r.ok ? r.json() : Promise.reject(r);
-        }).catch(function(e) { clearTimeout(tid); return Promise.reject(e); });
-      }
-      function fetchMeForBootstrap(ms) {
-        var ctrl = new AbortController();
-        var tid = setTimeout(function() { ctrl.abort(); }, ms);
-        return fetch("/api/v1/me", { signal: ctrl.signal, credentials: "same-origin" }).then(function(r) {
-          clearTimeout(tid);
-          if (r.status === 401) {
-            return null;
-          }
-          if (!r.ok) {
-            return Promise.reject(r);
-          }
-          return r.json();
-        }).catch(function(e) {
-          clearTimeout(tid);
-          return Promise.reject(e);
-        });
-      }
-      window.__BOOTSTRAP_ME__ = { status: 'pending' };
-      var meP = fetchMeForBootstrap(30000);
-      window.__PREFETCH__['/api/v1/me'] = meP;
-      meP.then(function(user) {
-        if (user === null) {
-          window.__BOOTSTRAP_ME__ = { status: 'guest' };
-        } else {
-          window.__BOOTSTRAP_ME__ = { status: 'ok', user: user };
-        }
-        window.dispatchEvent(new Event('cax-bootstrap-me'));
-      }).catch(function() {
-        window.__BOOTSTRAP_ME__ = { status: 'guest' };
-        window.dispatchEvent(new Event('cax-bootstrap-me'));
-      });
-      var postsP = fetchWithTimeout('/api/v1/posts?limit=30&offset=0', 30000);
-      window.__PREFETCH__['/api/v1/posts?limit=30&offset=0'] = postsP;
-      postsP.then(function(posts) {
-        if (!posts || !posts.length) return;
-        var mediaPost = null;
-        var mediaKind = null;
-        for (var i = 0; i < posts.length; i++) {
-          var p = posts[i];
-          if (p.images && p.images[0]) {
-            mediaPost = p;
-            mediaKind = 'image';
-            break;
-          }
-          if (p.movie && p.movie.id) {
-            mediaPost = p;
-            mediaKind = 'movie';
-            break;
-          }
-        }
-        if (mediaPost && mediaKind === 'image' && mediaPost.images[0]) {
-          var link = document.createElement('link');
-          link.rel = 'preload';
-          link.as = 'image';
-          link.href = '/images/' + mediaPost.images[0].id + '.jpg?w=480';
-          link.fetchPriority = 'high';
-          document.head.appendChild(link);
-        }
-        var first = posts[0];
-        if (first && first.user && first.user.profileImage) {
-          var link2 = document.createElement('link');
-          link2.rel = 'preload';
-          link2.as = 'image';
-          link2.href = '/images/profiles/' + first.user.profileImage.id + '.jpg?w=96';
-          link2.fetchPriority = 'high';
-          document.head.appendChild(link2);
-        }
-      }).catch(function(){});
-    </script>
     <div id="app">
-      <div style="display:flex;justify-content:center;font-family:sans-serif">
-        <div style="display:flex;min-height:100vh;max-width:100%">
-          <div style="width:100%;max-width:640px;padding:16px">
-            <p style="font-size:1.5rem;color:#6b7280">読み込み中...</p>
+      <div style="display: flex; justify-content: center">
+        <div style="display: flex; min-height: 100vh; max-width: 100%">
+          <div style="width: 100%; max-width: 640px; padding: 16px">
+            <p style="margin: 0; font-size: 1.5rem; color: #57534e">読み込み中...</p>
           </div>
         </div>
       </div>
     </div>
+    <script>
+      window.__PREFETCH__ = {};
+      function fetchWithTimeout(url, ms) {
+        var ctrl = new AbortController();
+        var tid = setTimeout(function () {
+          ctrl.abort();
+        }, ms);
+        return fetch(url, { signal: ctrl.signal, credentials: "same-origin" })
+          .then(function (r) {
+            clearTimeout(tid);
+            return r.ok ? r.json() : Promise.reject(r);
+          })
+          .catch(function (e) {
+            clearTimeout(tid);
+            return Promise.reject(e);
+          });
+      }
+      function fetchMeForBootstrap(ms) {
+        var ctrl = new AbortController();
+        var tid = setTimeout(function () {
+          ctrl.abort();
+        }, ms);
+        return fetch("/api/v1/me", { signal: ctrl.signal, credentials: "same-origin" })
+          .then(function (r) {
+            clearTimeout(tid);
+            if (r.status === 401) {
+              return null;
+            }
+            if (!r.ok) {
+              return Promise.reject(r);
+            }
+            return r.json();
+          })
+          .catch(function (e) {
+            clearTimeout(tid);
+            return Promise.reject(e);
+          });
+      }
+      var postDetailMatch = /^\/posts\/([^/]+)\/?$/.exec(location.pathname);
+      if (postDetailMatch) {
+        var postDetailUrl = "/api/v1/posts/" + postDetailMatch[1];
+        var postDetailP = fetchWithTimeout(postDetailUrl, 30000);
+        window.__PREFETCH__[postDetailUrl] = postDetailP;
+        postDetailP
+          .then(function (post) {
+            if (!post) return;
+            if (post.images && post.images[0]) {
+              var lk = document.createElement("link");
+              lk.rel = "preload";
+              lk.as = "image";
+              lk.href = "/images/" + post.images[0].id + ".jpg?w=640";
+              lk.fetchPriority = "high";
+              document.head.appendChild(lk);
+            } else if (post.movie && post.movie.id) {
+              var lkm = document.createElement("link");
+              lkm.rel = "preload";
+              lkm.as = "image";
+              lkm.href = "/movies/" + post.movie.id + ".gif?w=480";
+              lkm.fetchPriority = "high";
+              document.head.appendChild(lkm);
+            }
+            if (post.user && post.user.profileImage) {
+              var lkp = document.createElement("link");
+              lkp.rel = "preload";
+              lkp.as = "image";
+              lkp.href = "/images/profiles/" + post.user.profileImage.id + ".jpg?w=96";
+              lkp.fetchPriority = post.images && post.images[0] || (post.movie && post.movie.id) ? "auto" : "high";
+              document.head.appendChild(lkp);
+            }
+          })
+          .catch(function () {});
+      }
+
+      window.__BOOTSTRAP_ME__ = { status: "pending" };
+      var meP = fetchMeForBootstrap(30000);
+      window.__PREFETCH__["/api/v1/me"] = meP;
+      meP
+        .then(function (user) {
+          if (user === null) {
+            window.__BOOTSTRAP_ME__ = { status: "guest" };
+          } else {
+            window.__BOOTSTRAP_ME__ = { status: "ok", user: user };
+          }
+          window.dispatchEvent(new Event("cax-bootstrap-me"));
+        })
+        .catch(function () {
+          window.__BOOTSTRAP_ME__ = { status: "guest" };
+          window.dispatchEvent(new Event("cax-bootstrap-me"));
+        });
+      if (!postDetailMatch) {
+        var postsP = fetchWithTimeout("/api/v1/posts?limit=15&offset=0", 30000);
+        window.__PREFETCH__["/api/v1/posts?limit=15&offset=0"] = postsP;
+        postsP
+          .then(function (posts) {
+            if (!posts || !posts.length) return;
+            var mediaPost = null;
+            var mediaKind = null;
+            for (var i = 0; i < posts.length; i++) {
+              var p = posts[i];
+              if (p.images && p.images[0]) {
+                mediaPost = p;
+                mediaKind = "image";
+                break;
+              }
+              if (p.movie && p.movie.id) {
+                mediaPost = p;
+                mediaKind = "movie";
+                break;
+              }
+            }
+            if (mediaPost && mediaKind === "image" && mediaPost.images[0]) {
+              var link = document.createElement("link");
+              link.rel = "preload";
+              link.as = "image";
+              link.href = "/images/" + mediaPost.images[0].id + ".jpg?w=360";
+              link.fetchPriority = "high";
+              document.head.appendChild(link);
+            }
+            if (mediaPost && mediaKind === "movie" && mediaPost.movie && mediaPost.movie.id) {
+              var linkMv = document.createElement("link");
+              linkMv.rel = "preload";
+              linkMv.as = "image";
+              linkMv.href = "/movies/" + mediaPost.movie.id + ".gif?w=360";
+              linkMv.fetchPriority = "high";
+              document.head.appendChild(linkMv);
+            }
+            var first = posts[0];
+            if (first && first.user && first.user.profileImage) {
+              var link2 = document.createElement("link");
+              link2.rel = "preload";
+              link2.as = "image";
+              link2.href = "/images/profiles/" + first.user.profileImage.id + ".jpg?w=96";
+              link2.fetchPriority = "high";
+              document.head.appendChild(link2);
+            }
+          })
+          .catch(function () {});
+      }
+    </script>
   </body>
 </html>

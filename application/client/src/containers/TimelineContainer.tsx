@@ -9,6 +9,7 @@ export const TimelineContainer = () => {
   const { data: posts, fetchMore, isLoading, error } = useInfiniteFetch<Models.Post>(
     "/api/v1/posts",
     fetchJSON,
+    { pageSize: 15 },
   );
 
   return (

@@ -14,7 +14,13 @@ export const Timeline = ({ timeline }: Props) => {
     <section>
       {timeline.map((post, index) => {
         return (
-          <TimelineItem key={post.id} post={post} priority={index === priorityPostIndex} />
+          <TimelineItem
+            key={post.id}
+            contentVisibilityAuto={index > 1}
+            post={post}
+            priorityAvatar={index === 0}
+            priorityMedia={index === priorityPostIndex}
+          />
         );
       })}
     </section>

@@ -28,6 +28,7 @@ export const ImageArea = ({ images, priority = false }: Props) => {
               })}
             >
               <CoveredImage
+                feedOptimize={!priority}
                 imageId={image.id}
                 priority={priority}
                 sizes={images.length === 1 ? IMAGE_SIZES_FULL : IMAGE_SIZES_GRID}
