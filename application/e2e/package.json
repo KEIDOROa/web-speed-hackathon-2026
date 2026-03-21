@@ -8,6 +8,8 @@
   "scripts": {
     "typecheck": "tsc",
     "test": "playwright test",
+    "test:heap": "cross-env NODE_OPTIONS=--max-old-space-size=8192 playwright test",
+    "test:7:heap": "cross-env NODE_OPTIONS=--max-old-space-size=8192 E2E_WORKERS=7 playwright test",
     "test:7": "cross-env E2E_WORKERS=7 playwright test",
     "test:last-failed": "playwright test --last-failed",
     "test:last-failed:serial": "cross-env E2E_WORKERS=1 playwright test --last-failed",
