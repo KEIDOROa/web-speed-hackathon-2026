@@ -15,6 +15,7 @@
     "test:e2e:last-failed:serial": "pnpm --filter @web-speed-hackathon-2026/e2e run test:last-failed:serial",
     "test:e2e:serial": "pnpm --filter @web-speed-hackathon-2026/e2e run test:serial",
     "start": "pnpm --filter @web-speed-hackathon-2026/server start",
+    "score:dm": "pnpm --dir ../scoring-tool run score:dm",
     "typecheck": "pnpm run --recursive typecheck",
     "format": "pnpm run format:oxlint && pnpm run format:oxfmt",
     "format:oxlint": "oxlint --fix",

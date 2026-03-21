@@ -9,7 +9,8 @@
     "format": "pnpm run format:oxlint && pnpm run format:oxfmt",
     "format:oxlint": "oxlint --fix",
     "format:oxfmt": "oxfmt",
-    "start": "tsx ./src/index.ts"
+    "start": "tsx ./src/index.ts",
+    "score:dm": "tsx ./src/index.ts --applicationUrl http://localhost:3000 --targetName DM送信"
   },
   "dependencies": {
     "@actions/artifact": "2.3.2",
