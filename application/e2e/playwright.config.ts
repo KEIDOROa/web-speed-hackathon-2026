@@ -7,6 +7,7 @@ const BASE_URL = process.env["E2E_BASE_URL"] ?? "http://localhost:3000";
 // --- 並列ワーカー（主にここを読み・環境変数で調整）---
 // ・タイムアウトや VRT のブレが出る → E2E_WORKERS=1 で逐次実行にすると安定しやすい
 // ・CPU に余裕があり短縮したい → E2E_WORKERS=4 など明示（未指定時は論理 CPU の半分、最低 1）
+// ・並列を抑えたい（例: 14 → 7）→ E2E_WORKERS=7 または pnpm run test:7
 const DEFAULT_PARALLEL_WORKERS = Math.max(1, Math.floor(os.cpus().length / 2));
 const envWorkerOverride = process.env["E2E_WORKERS"];
 const parsedWorkers = envWorkerOverride !== undefined ? Number(envWorkerOverride) : NaN;
