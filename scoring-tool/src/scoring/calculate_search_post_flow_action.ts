@@ -39,7 +39,7 @@ export async function calculateSearchPostFlowAction({
       const searchInput = playwrightPage.getByRole("textbox", {
         name: "検索 (例: キーワード since:2025-01-01 until:2025-12-31)",
       });
-      await searchInput.pressSequentially(`アニメ since:2026-01-06${"0".repeat(20)}x`);
+      await searchInput.pressSequentially("アニメ since:2026-01-06");
     } catch (err) {
       throw new Error("検索クエリの入力に失敗しました", { cause: err });
     }
@@ -59,9 +59,7 @@ export async function calculateSearchPostFlowAction({
       const searchInput = playwrightPage.getByRole("textbox", {
         name: "検索 (例: キーワード since:2025-01-01 until:2025-12-31)",
       });
-      await searchInput.fill(
-        `アニメ since:2026-01-06${"0".repeat(10)}x until:2026-01-06${"0".repeat(10)}x`,
-      );
+      await searchInput.fill("アニメ since:2026-01-06 until:2026-12-31");
     } catch (err) {
       throw new Error("検索クエリの追加入力に失敗しました", { cause: err });
     }

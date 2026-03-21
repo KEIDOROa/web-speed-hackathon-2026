@@ -164,8 +164,9 @@ export async function calculateDmChatFlowAction({
       throw new Error("追加メッセージの入力に失敗しました", { cause: err });
     }
 
-    // 2通目のメッセージを送信
+    // 2通目のメッセージを送信（送信直後は textarea が disabled になりフォーカスが外れるため、明示的にフォーカスする）
     try {
+      await playwrightPage.getByRole("textbox", { name: "内容" }).click();
       await playwrightPage.keyboard.press("Enter");
     } catch (err) {
       throw new Error("2通目のメッセージの送信に失敗しました", { cause: err });

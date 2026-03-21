@@ -5,6 +5,7 @@ import {
   KeyboardEvent,
   memo,
   useCallback,
+  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -37,7 +38,14 @@ export const DirectMessagePage = memo(function DirectMessagePage({
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const lastMessageRef = useRef<HTMLLIElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const textAreaId = useId();
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      textareaRef.current?.focus({ preventScroll: true });
+    }
+  }, [isSubmitting]);
 
   const peer =
     conversation.initiator.id !== activeUser.id ? conversation.initiator : conversation.member;
@@ -177,6 +185,7 @@ export const DirectMessagePage = memo(function DirectMessagePage({
               内容
             </label>
             <textarea
+              ref={textareaRef}
               id={textAreaId}
               className="border-cax-border placeholder-cax-text-subtle focus:outline-cax-brand w-full resize-none rounded-xl border px-3 py-2 focus:outline-2 focus:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               value={text}
